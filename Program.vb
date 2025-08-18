@@ -7,8 +7,14 @@ Imports System.Threading
 
 Module Program
     Public zipmod = ""
+    Public depotdownloader = ""
     Sub Main()
         Console.Clear()
+        If OperatingSystem.IsLinux Then
+            depotdownloader = "./DepotDownloader"
+        ElseIf OperatingSystem.IsWindows Then
+            depotdownloader = "DepotDownloader.exe"
+        End If
         If Not File.Exists("mods.json") Then File.WriteAllText("mods.json", "[]")
         Dim mods As JArray = JArray.Parse(File.ReadAllText("mods.json"))
         Dim toRemove As New List(Of JObject)
@@ -130,7 +136,7 @@ Enter the path to the mod's .zip file: ")
         Dim downloader As New ProcessStartInfo
         Dim input = ""
 
-        downloader.FileName = "DepotDownloader.exe"
+
 
         Dim cacheDir = $"cache/{selectedversion}"
 
@@ -144,6 +150,7 @@ Enter the path to the mod's .zip file: ")
             Next
         Else
             ' If the selected version has not been cached, download it from the internet.
+            downloader.FileName = depotdownloader
             Console.Write("Enter your steam username: ")
             input = Console.ReadLine()
             downloader.Arguments = $"-app 945360 -depot 945361 -remember-password -manifest {manifestID} -dir cache/{selectedversion} -user {input}"

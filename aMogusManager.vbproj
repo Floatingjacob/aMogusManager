@@ -28,6 +28,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="DepotDownloader">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="DepotDownloader.exe">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
