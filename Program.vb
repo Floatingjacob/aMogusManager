@@ -31,9 +31,10 @@ Module Program
 
 
         Console.WriteLine("Welcome to aMogusManager")
-        Console.Write("1. Run an installed mod
+        Console.Write("1. Run an installed instance of Among Us
 2. Install a new mod from a .zip file
-3. Uninstall a mod
+3. Install vanilla Among Us.
+4. Uninstall a mod
 What is your selection?: ")
         Select Case Console.ReadLine()
             Case 1
@@ -41,6 +42,8 @@ What is your selection?: ")
             Case 2
                 installfromzip()
             Case 3
+                installvanilla()
+            Case 4
                 RemoveMod()
         End Select
 
@@ -72,7 +75,6 @@ What is your selection?: ")
     End Sub
     Public selectedversion = ""
     Sub installfromzip()
-        Dim installmodname = ""
         Console.Write($"
 Enter the path to the mod's .zip file: ")
         zipmod = Console.ReadLine()
@@ -95,7 +97,7 @@ Enter the path to the mod's .zip file: ")
             If input = version("version").ToString Then ' Makes sure the inputed version exists,
                 selectedversion = input.ToString        ' and then matches it with it's ManifestID
                 versionMatch = True
-                DownloadInstance(version("manifestID"))
+                DownloadInstance(version("manifestID"), True)
                 Exit For
             End If
         Next
@@ -107,9 +109,9 @@ Enter the path to the mod's .zip file: ")
 
     End Sub
 
-    Sub DownloadInstance(manifestID As String)
-        Console.Write("What do you want to name this mod? ")
-        Dim installmodname = Console.ReadLine().Trim()
+    Sub DownloadInstance(manifestID As String, modded As Boolean)
+        Console.Write("What do you want to name this instance? ")
+        Dim instancename = Console.ReadLine().Trim()
 
         Dim mods As JArray = JArray.Parse(File.ReadAllText("mods.json"))
         Dim downloader As New ProcessStartInfo
@@ -123,7 +125,7 @@ Enter the path to the mod's .zip file: ")
         If Directory.Exists(cacheDir) Then
             For Each f In Directory.GetFiles(cacheDir, "*", SearchOption.AllDirectories)
                 Dim relPath = Path.GetRelativePath(cacheDir, f)
-                Dim dest = Path.Combine($"instances/{installmodname}", relPath)
+                Dim dest = Path.Combine($"instances/{instancename}", relPath)
                 Directory.CreateDirectory(Path.GetDirectoryName(dest))
                 File.Copy(f, dest, True)
             Next
@@ -134,36 +136,33 @@ Enter the path to the mod's .zip file: ")
             downloader.Arguments = $"-app 945360 -depot 945361 -remember-password -manifest {manifestID} -dir cache/{selectedversion} -user {input}"
             downloader.UseShellExecute = True
             Process.Start(downloader).WaitForExit()
+            For Each f In Directory.GetFiles(cacheDir, "*", SearchOption.AllDirectories)
+                Dim relPath = Path.GetRelativePath(cacheDir, f)
+                Dim dest = Path.Combine($"instances/{instancename}", relPath)
+                Directory.CreateDirectory(Path.GetDirectoryName(dest))
+                File.Copy(f, dest, True)
+            Next
         End If
         ' Updates the list of installed mods.
         mods.Add(New JObject(
-                    New JProperty("name", $"{installmodname}"),
-                    New JProperty("installDir", $"instances/{installmodname}")
+                    New JProperty("name", $"{instancename}"),
+                    New JProperty("installDir", $"instances/{instancename}")
                 ))
         File.WriteAllText("mods.json", mods.ToString)
         ' Installs the actual mod to the new instance of Among Us.
-        ZipFile.ExtractToDirectory(zipmod, "tmp/", True)
-        ' If there is only a folder in the temp direcrory, copy it's contents to the Among Us installation.
-        If Directory.GetDirectories("tmp/").Count <= 2 Then
+        If modded Then
+            ZipFile.ExtractToDirectory(zipmod, "tmp/", True)
+            ' If there is only a folder in the temp direcrory, copy it's contents to the Among Us installation.
             For Each direc In Directory.GetDirectories("tmp")
                 For Each f In Directory.GetFiles(direc, "*", SearchOption.AllDirectories)
                     Dim relPath = f.Substring(direc.Length).TrimStart(Path.DirectorySeparatorChar)
-                    Dim dest = Path.Combine($"instances/{installmodname}", $"{relPath}")
+                    Dim dest = Path.Combine($"instances/{instancename}", $"{relPath}")
                     Directory.CreateDirectory(Path.GetDirectoryName(dest))
                     File.Copy(f, dest, True)
                 Next
             Next
-        Else
-            For Each direc In Directory.GetDirectories("tmp")
-                For Each f In Directory.GetFiles(direc, "*", SearchOption.AllDirectories)
-                    Dim relPath = f.Substring(direc.Length).TrimStart(Path.DirectorySeparatorChar)
-                    Dim dest = Path.Combine($"instances/{installmodname}", $"{relPath}")
-                    Directory.CreateDirectory(Path.GetDirectoryName(dest))
-                    File.Copy(f, dest, True)
-                Next
-            Next
+            Directory.Delete("tmp", True) ' Clears the temp folder
         End If
-        Directory.Delete("tmp", True) ' Clears the temp folder
         Main()
     End Sub
     Sub RemoveMod()
@@ -186,5 +185,32 @@ Enter the path to the mod's .zip file: ")
                 Exit For
             End If
         Next
+    End Sub
+
+
+    Sub installvanilla()
+        Dim input = ""
+
+        Dim versions As JArray = JArray.Parse(File.ReadAllText("versions.json"))
+        For Each version As JObject In versions
+            Console.WriteLine(version("version"))
+        Next
+
+        Console.Write("What version of Among Us do you want to install?: ")
+        input = Console.ReadLine().ToString
+        Dim versionMatch As Boolean = False
+        For Each version As JObject In versions
+            If input = version("version").ToString Then ' Makes sure the inputed version exists,
+                selectedversion = input.ToString        ' and then matches it with it's ManifestID
+                versionMatch = True
+                DownloadInstance(version("manifestID"), False)
+                Exit For
+            End If
+        Next
+
+        If versionMatch = False Then
+            Console.WriteLine("Error: Version not found")
+            installvanilla()
+        End If
     End Sub
 End Module
