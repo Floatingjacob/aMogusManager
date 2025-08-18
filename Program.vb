@@ -8,13 +8,23 @@ Imports System.Threading
 Module Program
     Public zipmod = ""
     Public depotdownloader = ""
+    Public moguspath = ""
     Sub Main()
         Console.Clear()
         If OperatingSystem.IsLinux Then
             depotdownloader = "./DepotDownloader"
+            moguspath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local/share/Steam/steamapps/common/Among Us")
+
+            Dim homeDir As String = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
+            Dim prefix As String = Path.Combine(homeDir, ".local/share/Steam/steamapps/compatdata/945360/pfx")
+            Process.Start("/bin/bash", $"-c ""WINEDEBUG=-all WINEPREFIX='{prefix}' wine reg add HKCU\\Software\\Wine\\DllOverrides /v winhttp /d native,builtin /f >/dev/null 2>error.log""").WaitForExit()
+
         ElseIf OperatingSystem.IsWindows Then
             depotdownloader = "DepotDownloader.exe"
+            moguspath = "C:/Program Files (x86)/Steam/steamapps/common/Among Us"
         End If
+
+
         If Not File.Exists("mods.json") Then File.WriteAllText("mods.json", "[]")
         Dim mods As JArray = JArray.Parse(File.ReadAllText("mods.json"))
         Dim toRemove As New List(Of JObject)
@@ -45,7 +55,7 @@ Module Program
 What is your selection?: ")
         Select Case Console.ReadLine()
             Case 1
-                runmod()
+                Runmod()
             Case 2
                 installfromzip()
             Case 3
@@ -57,7 +67,7 @@ What is your selection?: ")
     End Sub
 
 
-    Async Sub runmod()
+    Sub Runmod()
 
         Dim mods As JArray = JArray.Parse(File.ReadAllText("mods.json"))
         Dim input = ""
@@ -75,19 +85,16 @@ What is your selection?: ")
                 Dim amogus As New ProcessStartInfo
                 amogus.UseShellExecute = True
                 amogus.FileName = "steam://launch/945360"
-
-                Directory.Delete("C:/Program Files (x86)/Steam/steamapps/common/Among Us", True) ' Replaces the Steam Among Us installation with the one to be launched.
+                Directory.Delete(moguspath, True) ' Replaces the Steam Among Us installation with the one to be launched.
                 For Each f In Directory.GetFiles(mogusmod("installDir"), "*", SearchOption.AllDirectories)
                     Dim relPath = Path.GetRelativePath(mogusmod("installDir"), f)
-                    Dim dest = Path.Combine("C:/Program Files (x86)/Steam/steamapps/common/Among Us", relPath)
+                    Dim dest = Path.Combine(moguspath, relPath)
                     Directory.CreateDirectory(Path.GetDirectoryName(dest))
                     File.Copy(f, dest, True)
                 Next
                 Process.Start(amogus)
                 Console.WriteLine($"Launching {mogusmod("name")}. Bye!")
-
                 Thread.Sleep(2500)
-
                 Exit For
             End If
         Next
@@ -158,7 +165,7 @@ Enter the path to the mod's .zip file: ")
             Process.Start(downloader).WaitForExit()
             For Each f In Directory.GetFiles(cacheDir, "*", SearchOption.AllDirectories)
                 Dim relPath = Path.GetRelativePath(cacheDir, f)
-                Dim dest = Path.Combine($"instances/{instancename}", relPath)
+                Dim dest = Path.Combine($"./instances/{instancename}", relPath)
                 Directory.CreateDirectory(Path.GetDirectoryName(dest))
                 File.Copy(f, dest, True)
             Next
@@ -166,7 +173,7 @@ Enter the path to the mod's .zip file: ")
         ' Updates the list of installed mods.
         mods.Add(New JObject(
                     New JProperty("name", $"{instancename}"),
-                    New JProperty("installDir", $"instances/{instancename}")
+                    New JProperty("installDir", $"./instances/{instancename}")
                 ))
         File.WriteAllText("mods.json", mods.ToString)
         ' Installs the actual mod to the new instance of Among Us.
@@ -176,7 +183,7 @@ Enter the path to the mod's .zip file: ")
             For Each direc In Directory.GetDirectories("tmp")
                 For Each f In Directory.GetFiles(direc, "*", SearchOption.AllDirectories)
                     Dim relPath = f.Substring(direc.Length).TrimStart(Path.DirectorySeparatorChar)
-                    Dim dest = Path.Combine($"instances/{instancename}", $"{relPath}")
+                    Dim dest = Path.Combine($"./instances/{instancename}", $"{relPath}")
                     Directory.CreateDirectory(Path.GetDirectoryName(dest))
                     File.Copy(f, dest, True)
                 Next

@@ -1,7 +1,9 @@
 {
   "profiles": {
     "aMogusManager": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "hotReloadEnabled": false,
+      "remoteDebugEnabled": false
     },
     "WSL": {
       "commandName": "WSL2",
