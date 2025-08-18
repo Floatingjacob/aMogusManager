@@ -2,6 +2,7 @@
 Imports Newtonsoft.Json.Linq
 Imports System.IO
 Imports System.IO.Compression
+Imports System.Threading
 
 
 Module Program
@@ -50,7 +51,7 @@ What is your selection?: ")
     End Sub
 
 
-    Sub runmod()
+    Async Sub runmod()
 
         Dim mods As JArray = JArray.Parse(File.ReadAllText("mods.json"))
         Dim input = ""
@@ -66,9 +67,21 @@ What is your selection?: ")
             ' Launches modded Among Us if the installation exists
             If String.Equals(mogusmod("name").ToString?.Trim(), input, StringComparison.OrdinalIgnoreCase) Then
                 Dim amogus As New ProcessStartInfo
-                amogus.FileName = ($"{mogusmod("installDir")}/Among Us.exe")
+                amogus.UseShellExecute = True
+                amogus.FileName = "steam://launch/945360"
+
+                Directory.Delete("C:/Program Files (x86)/Steam/steamapps/common/Among Us", True) ' Replaces the Steam Among Us installation with the one to be launched.
+                For Each f In Directory.GetFiles(mogusmod("installDir"), "*", SearchOption.AllDirectories)
+                    Dim relPath = Path.GetRelativePath(mogusmod("installDir"), f)
+                    Dim dest = Path.Combine("C:/Program Files (x86)/Steam/steamapps/common/Among Us", relPath)
+                    Directory.CreateDirectory(Path.GetDirectoryName(dest))
+                    File.Copy(f, dest, True)
+                Next
                 Process.Start(amogus)
                 Console.WriteLine($"Launching {mogusmod("name")}. Bye!")
+
+                Thread.Sleep(2500)
+
                 Exit For
             End If
         Next
