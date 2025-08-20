@@ -14,10 +14,19 @@ Module Program
         If OperatingSystem.IsLinux Then
             depotdownloader = "./DepotDownloader"
             moguspath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local/share/Steam/steamapps/common/Among Us")
-
-            Dim homeDir As String = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
-            Dim prefix As String = Path.Combine(homeDir, ".local/share/Steam/steamapps/compatdata/945360/pfx")
-            Process.Start("/bin/bash", $"-c ""WINEDEBUG=-all WINEPREFIX='{prefix}' wine reg add HKCU\\Software\\Wine\\DllOverrides /v winhttp /d native,builtin /f >/dev/null 2>error.log""").WaitForExit()
+            If Not File.Exists(".prefix`d") Then
+                Dim homeDir As String = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
+                Dim prefix As String = Path.Combine(homeDir, ".local/share/Steam/steamapps/compatdata/945360/pfx")
+                Process.Start("/bin/bash", $"-c ""WINEDEBUG=-all WINEPREFIX='{prefix}' wine reg add HKCU\\Software\\Wine\\DllOverrides /v winhttp /d native,builtin /f >/dev/null 2>error.log""").WaitForExit()
+                File.WriteAllText(".prefix`d", "1")
+            ElseIf File.ReadAllText(".prefix`d") < 10 Then
+                File.WriteAllText(".prefix`d", $"{File.ReadAllText(".prefix`d") + 1}")
+            ElseIf File.ReadAllText(".prefix`d") > 10 Then
+                Dim homeDir As String = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
+                Dim prefix As String = Path.Combine(homeDir, ".local/share/Steam/steamapps/compatdata/945360/pfx")
+                Process.Start("/bin/bash", $"-c ""WINEDEBUG=-all WINEPREFIX='{prefix}' wine reg add HKCU\\Software\\Wine\\DllOverrides /v winhttp /d native,builtin /f >/dev/null 2>error.log""").WaitForExit()
+                File.WriteAllText(".prefix`d", "1")
+            End If
 
         ElseIf OperatingSystem.IsWindows Then
             depotdownloader = "DepotDownloader.exe"
@@ -68,7 +77,6 @@ What is your selection?: ")
 
 
     Sub Runmod()
-
         Dim mods As JArray = JArray.Parse(File.ReadAllText("mods.json"))
         Dim input = ""
         ' Spits out a list of the installed mods
@@ -79,24 +87,22 @@ What is your selection?: ")
         Console.Write("What mod do you want to run? ")
         input = Console.ReadLine
         For Each mogusmod As JObject In mods
-            Dim modname = mogusmod("name")
-            ' Launches modded Among Us if the installation exists
-            If String.Equals(mogusmod("name").ToString?.Trim(), input, StringComparison.OrdinalIgnoreCase) Then
+            Dim modname = mogusmod("name").ToString
+
+            If String.Equals(modname?.Trim(), input, StringComparison.OrdinalIgnoreCase) Then
+                If Directory.Exists(moguspath) Then
+                    Directory.Delete(moguspath, True)
+                End If
+                ' Creates a symlink to the Among Us instance's folder, instead of manually copying all the files to Steam
+                Directory.CreateSymbolicLink(moguspath, $"{Path.GetFullPath(".")}\{mogusmod("installDir")}")
                 Dim amogus As New ProcessStartInfo
                 amogus.UseShellExecute = True
                 amogus.FileName = "steam://launch/945360"
-                Directory.Delete(moguspath, True) ' Replaces the Steam Among Us installation with the one to be launched.
-                For Each f In Directory.GetFiles(mogusmod("installDir"), "*", SearchOption.AllDirectories)
-                    Dim relPath = Path.GetRelativePath(mogusmod("installDir"), f)
-                    Dim dest = Path.Combine(moguspath, relPath)
-                    Directory.CreateDirectory(Path.GetDirectoryName(dest))
-                    File.Copy(f, dest, True)
-                Next
                 Process.Start(amogus)
                 Console.WriteLine($"Launching {mogusmod("name")}. Bye!")
                 Thread.Sleep(2500)
-                Exit For
-            End If
+                    Exit For
+                End If
         Next
     End Sub
     Public selectedversion = ""
@@ -142,9 +148,6 @@ Enter the path to the mod's .zip file: ")
         Dim mods As JArray = JArray.Parse(File.ReadAllText("mods.json"))
         Dim downloader As New ProcessStartInfo
         Dim input = ""
-
-
-
         Dim cacheDir = $"cache/{selectedversion}"
 
         ' If the selected version of Among Us has already been downloaded, skip downloading from the internet, and use the locally cached version.
