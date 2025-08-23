@@ -1,7 +1,6 @@
-
+﻿
 Imports Newtonsoft.Json.Linq
 Imports System.IO
-Imports System.IO.Compression
 Imports System.Threading
 
 
@@ -10,6 +9,7 @@ Module Program
     Public depotdownloader = ""
     Public moguspath = ""
     Sub Main()
+        Console.CursorVisible = False
         Console.Clear()
         If OperatingSystem.IsLinux Then
             depotdownloader = "./DepotDownloader"
@@ -101,8 +101,8 @@ What is your selection?: ")
                 Process.Start(amogus)
                 Console.WriteLine($"Launching {mogusmod("name")}. Bye!")
                 Thread.Sleep(2500)
-                    Exit For
-                End If
+                Exit For
+            End If
         Next
     End Sub
     Public selectedversion = ""
@@ -141,6 +141,7 @@ Enter the path to the mod's .zip file: ")
 
     End Sub
 
+
     Sub DownloadInstance(manifestID As String, modded As Boolean)
         Console.Write("What do you want to name this instance? ")
         Dim instancename = Console.ReadLine().Trim()
@@ -165,7 +166,7 @@ Enter the path to the mod's .zip file: ")
             input = Console.ReadLine()
             downloader.Arguments = $"-app 945360 -depot 945361 -remember-password -manifest {manifestID} -dir cache/{selectedversion} -user {input}"
             downloader.UseShellExecute = True
-            Process.Start(downloader).WaitForExit()
+            Process.Start(downloader)
             For Each f In Directory.GetFiles(cacheDir, "*", SearchOption.AllDirectories)
                 Dim relPath = Path.GetRelativePath(cacheDir, f)
                 Dim dest = Path.Combine($"./instances/{instancename}", relPath)
@@ -181,7 +182,8 @@ Enter the path to the mod's .zip file: ")
         File.WriteAllText("mods.json", mods.ToString)
         ' Installs the actual mod to the new instance of Among Us.
         If modded Then
-            ZipFile.ExtractToDirectory(zipmod, "tmp/", True)
+            System.IO.Compression.ZipFile.ExtractToDirectory(zipmod, "tmp", True)
+
             ' If there is only a folder in the temp direcrory, copy it's contents to the Among Us installation.
             For Each direc In Directory.GetDirectories("tmp")
                 For Each f In Directory.GetFiles(direc, "*", SearchOption.AllDirectories)
@@ -243,4 +245,6 @@ Enter the path to the mod's .zip file: ")
             installvanilla()
         End If
     End Sub
+
+
 End Module
