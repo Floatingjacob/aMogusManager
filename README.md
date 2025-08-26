@@ -26,7 +26,11 @@ This program expects Among Us to be installed at
 "~/.local/share/Steam/steamapps/common/Among Us" for linux.
 
 
+NOTE FOR WINDOWS USERS: You need to manually run 'DepotDownloader.exe' once and press 'run anyways' when you launch this program for the first time.
+
+
 Note: when you give the program the path to a mod's zip file, do not include the " marks.
 
 
 This program will require you to authenticate with your Steam account to download new Among Us versions.
+
