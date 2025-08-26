@@ -3,13 +3,14 @@ Imports Newtonsoft.Json.Linq
 Imports System.IO
 Imports System.Threading
 
-
+' TODO: Make symlinking work for non-admin users. OR find an alternative method to 'install' the mods.
+' NOTE: Depot dowloader can't be run unless the user manually double clicks the exe and presses 'run anway' for first launch.
 Module Program
     Public zipmod = ""
     Public depotdownloader = ""
     Public moguspath = ""
     Sub Main()
-        Console.CursorVisible = False
+        Console.CursorVisible = True
         Console.Clear()
         If OperatingSystem.IsLinux Then
             depotdownloader = "./DepotDownloader"
@@ -31,12 +32,18 @@ Module Program
         ElseIf OperatingSystem.IsWindows Then
             depotdownloader = "DepotDownloader.exe"
             moguspath = "C:/Program Files (x86)/Steam/steamapps/common/Among Us"
+            If Not File.Exists("gamefolder.txt") Then
+                File.WriteAllText("gamefolder.txt", "C:/Program Files (x86)/Steam/steamapps/common/Among Us")
+            Else
+                moguspath = File.ReadAllText("gamefolder.txt")
+            End If
         End If
 
 
-        If Not File.Exists("mods.json") Then File.WriteAllText("mods.json", "[]")
-        Dim mods As JArray = JArray.Parse(File.ReadAllText("mods.json"))
+            If Not File.Exists("mods.json") Then File.WriteAllText("mods.json", "[]")
+        Dim mods As JArray = JArray.Parse(File.ReadAllText("mods.json").ToString)
         Dim toRemove As New List(Of JObject)
+
         ' *************Auto prunes invalid mod entries**************
         For Each mogusmod As JObject In mods
             Dim installDir = mogusmod("installDir").ToString()
@@ -51,13 +58,13 @@ Module Program
 
         If toRemove.Count > 0 Then
             File.WriteAllText("mods.json", mods.ToString())
-            Console.WriteLine($"{toRemove.Count} invalid mod(s) removed.")
+            Console.WriteLine($"{toRemove.Count} invalid Mod(s) removed.")
         End If
         '   ********************************************************
 
 
-        Console.WriteLine("Welcome to aMogusManager")
-        Console.Write("1. Run an installed instance of Among Us
+        Console.WriteLine("Welcome To aMogusManager")
+        Console.Write("1. Run an installed instance Of Among Us
 2. Install a new mod from a .zip file
 3. Install vanilla Among Us.
 4. Uninstall a mod
@@ -93,8 +100,19 @@ What is your selection?: ")
                 If Directory.Exists(moguspath) Then
                     Directory.Delete(moguspath, True)
                 End If
-                ' Creates a symlink to the Among Us instance's folder, instead of manually copying all the files to Steam
-                Directory.CreateSymbolicLink(moguspath, $"{Path.GetFullPath(".")}\{mogusmod("installDir")}")
+
+                If OperatingSystem.IsWindows Then ' If we are running Windows, use a junction instead of a symlink, so we don't need admin perms.
+                    Dim junction As New ProcessStartInfo
+                    junction.FileName = "cmd.exe"
+                    junction.Arguments = $"/c mklink /J ""{moguspath}"" ""{Path.GetFullPath(".")}\{mogusmod("installDir")}"""
+                    junction.UseShellExecute = False
+                    junction.CreateNoWindow = True
+                    Process.Start(junction).WaitForExit()
+
+                ElseIf OperatingSystem.IsLinux Then
+                    Directory.CreateSymbolicLink(moguspath, $"{Path.GetFullPath(".")}\{mogusmod("installDir")}")
+                End If
+
                 Dim amogus As New ProcessStartInfo
                 amogus.UseShellExecute = True
                 amogus.FileName = "steam://launch/945360"
@@ -110,6 +128,9 @@ What is your selection?: ")
         Console.Write($"
 Enter the path to the mod's .zip file: ")
         zipmod = Console.ReadLine()
+        If zipmod.ToString.Trim.StartsWith("""") AndAlso zipmod.ToString.Trim.EndsWith("""") Then
+            zipmod = zipmod.ToString.Trim.Substring(1, zipmod.ToString.Length - 2)
+        End If
         If String.IsNullOrWhiteSpace(zipmod) Then
             Console.WriteLine("Error: .zip path cannot be empty.")
             installfromzip()
@@ -218,8 +239,6 @@ Enter the path to the mod's .zip file: ")
             End If
         Next
     End Sub
-
-
     Sub installvanilla()
         Dim input = ""
 
