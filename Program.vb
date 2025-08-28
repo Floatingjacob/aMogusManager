@@ -3,12 +3,12 @@ Imports Newtonsoft.Json.Linq
 Imports System.IO
 Imports System.Threading
 
-' TODO: Make symlinking work for non-admin users. OR find an alternative method to 'install' the mods.
 ' NOTE: Depot dowloader can't be run unless the user manually double clicks the exe and presses 'run anway' for first launch.
 Module Program
     Public zipmod = ""
     Public depotdownloader = ""
     Public moguspath = ""
+    Public plugin = ""
     Sub Main()
         Console.CursorVisible = True
         Console.Clear()
@@ -66,17 +66,21 @@ Module Program
         Console.WriteLine("Welcome To aMogusManager")
         Console.Write("1. Run an installed instance Of Among Us
 2. Install a new mod from a .zip file
-3. Install vanilla Among Us.
-4. Uninstall a mod
+3. Install a plugin to an instance of Among Us
+4. Install vanilla Among Us
+5. Uninstall a mod
 What is your selection?: ")
         Select Case Console.ReadLine()
             Case 1
                 Runmod()
             Case 2
                 installfromzip()
+
             Case 3
-                installvanilla()
+                installplugin()
             Case 4
+                installvanilla()
+            Case 5
                 RemoveMod()
         End Select
 
@@ -265,5 +269,45 @@ Enter the path to the mod's .zip file: ")
         End If
     End Sub
 
+    Sub installplugin()
+        Dim mods As JArray = JArray.Parse(File.ReadAllText("mods.json"))
+        Console.Write($"
+Enter the path to the plugin's .zip file: ")
+        plugin = Console.ReadLine()
+        If plugin.ToString.Trim.StartsWith("""") AndAlso plugin.ToString.Trim.EndsWith("""") Then
+            plugin = plugin.ToString.Trim.Substring(1, plugin.ToString.Length - 2)
+        End If
+        If String.IsNullOrWhiteSpace(plugin) Then
+            Console.WriteLine("Error: .zip path cannot be empty.")
+            installplugin()
+        End If
+
+        Dim input = ""
+        For Each mogusmod As JObject In mods
+            Dim modname = mogusmod("name")
+            Console.WriteLine($"{modname}")
+        Next
+        Console.Write("What instance of Among Us do you want to install this plugin to?: ")
+
+        input = Console.ReadLine().ToString
+
+        Dim instancefound As Boolean = False
+        For Each mogusmod As JObject In mods
+            Dim modname = mogusmod("name").ToString
+
+            If String.Equals(modname?.Trim(), input, StringComparison.OrdinalIgnoreCase) Then
+                instancefound = True
+                System.IO.Compression.ZipFile.ExtractToDirectory(plugin, mogusmod("installDir").ToString(), True)
+                Main()
+                Exit For
+            End If
+        Next
+
+        If instancefound = False Then
+            Console.WriteLine("Error: Instance not found")
+            installfromzip()
+        End If
+
+    End Sub
 
 End Module
