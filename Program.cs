@@ -25,7 +25,7 @@ class Program
 
     static async Task Main()
     {
-        await updater();
+        
         interaction = true;
         while (true)
         {
@@ -55,7 +55,7 @@ class Program
 
             if (!File.Exists("mods.json")) File.WriteAllText("mods.json", "[]");
             pruneMods();
-
+            await updater();
             Console.WriteLine("Welcome To aMogusManager");
             Console.Write(@"1. Run an installed instance Of Among Us
 2. Install a new mod from a .ZIP file
@@ -368,17 +368,16 @@ What is your selection?: ");
                 File.Move("versions.json", "versions.json.old");
                 File.Move("aMogusManager.pdb", "aMogusManager.pdb.old");
             }
-            await File.WriteAllBytesAsync("./update.zip", update);
-          
-            
-            ZipFile.ExtractToDirectory("update.zip", ".", true);
+            await File.WriteAllBytesAsync("update.zip", update);
+            //ZipFile.ExtractToDirectory(Path.Combine(AppContext.BaseDirectory, "update.zip"), AppContext.BaseDirectory, true); //Doesnt work for some reason
+            Process.Start(new ProcessStartInfo { UseShellExecute = true, FileName = "tar", Arguments = "-xf update.zip" }).WaitForExit();
             File.WriteAllText("version.txt", latestVersion.ToString());
             Console.WriteLine("Done! Restarting...");
             if (OperatingSystem.IsLinux()) Process.Start(new ProcessStartInfo { FileName = "aMogusManager", UseShellExecute = true });
             if (OperatingSystem.IsWindows()) Process.Start(new ProcessStartInfo { FileName = "aMogusManager.exe", UseShellExecute = true });
             Environment.Exit(0);
         }
-        if (latestVersion == currentVersion) { 
+        else if (latestVersion == currentVersion) { 
             Console.WriteLine("Up to date!");
             await Task.Delay(1000);
             return;     
