@@ -1,4 +1,4 @@
-﻿/*
+/*
  
  Welcome to my super-fragile, idiot-succeptible, OCD-inducing Among Us mod manager.
 
@@ -13,37 +13,44 @@
 
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
+using System.IO.Compression;
 
 class Program
 {
+    static bool interaction = false;
     static string zipmod;
     static string moguspath;
     static string plugin;
     static string selectedversion;
 
-    static void Main()
+    static async Task Main()
     {
+        await updater();
+        interaction = true;
         while (true)
         {
+            
             Console.CursorVisible = true;
             Console.Clear();
             // Determines your OS and changes a few settings
-            if (Environment.OSVersion.Platform == PlatformID.Unix)
+            if (OperatingSystem.IsLinux())
             {
-                moguspath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local/share/Steam/steamapps/common/Among Us");
+                if (!File.Exists("gamefolder.txt")) File.WriteAllText($"{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local/share/Steam/steamapps/common/Among Us")}", "gamefolder.txt");
+                moguspath = File.ReadAllText("gamefolder.txt");
+                if (File.Exists("aMogusManager.old")) File.Delete("aMogusManager.old");
+                if (File.Exists("aMogusManager.pdb.old")) File.Delete("aMogusManager.pdb.old");
+                if (File.Exists("versions.json.old")) File.Delete("versions.json.old");
                 LinuxPrefix();
             }
-            else if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            else if (OperatingSystem.IsWindows())
             {
-                moguspath = "C:/Program Files (x86)/Steam/steamapps/common/Among Us";
-            }
-            else if (!File.Exists("gamefolder.txt"))
-            {
-                File.WriteAllText("gamefolder.txt", "C:/Program Files (x86)/Steam/steamapps/common/Among Us");
-            }
-            else
-            {
+                
+                if (!File.Exists("gamefolder.txt")) File.WriteAllText("gamefolder.txt", "C:/Program Files (x86)/Steam/steamapps/common/Among Us");
                 moguspath = File.ReadAllText("gamefolder.txt");
+                if (File.Exists("aMogusManager.exe.old")) File.Delete("aMogusManager.exe.old");
+                if (File.Exists("aMogusManager.pdb.old")) File.Delete("aMogusManager.pdb.old");
+                if (File.Exists("versions.json.old")) File.Delete("versions.json.old");
+
             }
 
             if (!File.Exists("mods.json")) File.WriteAllText("mods.json", "[]");
@@ -68,10 +75,14 @@ What is your selection?: ");
                 case 3: installplugin(); break;
                 case 4: installvanilla(); break;
                 case 5: RemoveMod(); break;
+                case 6: await updater(); break;
+            }
+            if (interaction) { 
+                Console.WriteLine("Press any key to return to the main menu..."); 
+                Console.ReadKey();
             }
 
-            Console.WriteLine("Press any key to return to the menu...");
-            Console.ReadKey();
+
         }
     }
 
@@ -93,7 +104,7 @@ What is your selection?: ");
     static void pruneMods()
     {
         JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
-        var toRemove = new System.Collections.Generic.List<JObject>();
+        var toRemove = new List<JObject>();
 
         foreach (JObject mogusmod in mods)
         {
@@ -317,12 +328,59 @@ What is your selection?: ");
         {
             if (string.Equals(mogusmod["name"]?.ToString().Trim(), input, StringComparison.OrdinalIgnoreCase))
             {
-                System.IO.Compression.ZipFile.ExtractToDirectory(plugin, mogusmod["installDir"]?.ToString(), true);
+                ZipFile.ExtractToDirectory(plugin, mogusmod["installDir"]?.ToString(), true);
                 Console.WriteLine("Plugin installed successfully.");
                 return;
             }
         }
 
         Console.WriteLine("Error: Instance not found.");
+    }
+
+
+    static async Task updater() {
+        Console.Clear();   
+        interaction = false;
+        var client = new HttpClient();
+        client.DefaultRequestHeaders.Add("User-Agent", "aMogusManager/1.0");
+        var response = await client.GetStringAsync("https://api.github.com/repos/floatingjacob/amogusmanager/releases/latest");
+        string tag = JObject.Parse(response)["tag_name"].ToString();
+        string version = await client.GetStringAsync($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/version.txt");
+        Version currentVersion = new Version(File.ReadAllText("version.txt").Trim());
+        Version latestVersion = new Version(version.Trim());
+        Console.WriteLine("Checking for updates...");
+        if (latestVersion > currentVersion)
+        {
+            Console.WriteLine($"There is an update avalible ({currentVersion} ==> {latestVersion}).\n Installing now...");
+            var update = await client.GetByteArrayAsync($"https://api.github.com/floatingjacob/amogusmanager/releases/download/{tag}/win-x86.zip/");
+            if (OperatingSystem.IsLinux())
+            {
+                update = await client.GetByteArrayAsync($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/linux.zip");
+                File.Move("aMogusManager", "aMogusManager.old");
+                File.Move("versions.json", "versions.json.old");
+                File.Move("aMogusManager.pdb", "aMogusManager.pdb.old");
+            }
+            else if (OperatingSystem.IsWindows())
+            {
+                update = await client.GetByteArrayAsync($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/windows.zip");
+                File.Move("aMogusManager.exe", "aMogusManager.exe.old");
+                File.Move("versions.json", "versions.json.old");
+                File.Move("aMogusManager.pdb", "aMogusManager.pdb.old");
+            }
+            await File.WriteAllBytesAsync("./update.zip", update);
+          
+            
+            ZipFile.ExtractToDirectory("update.zip", ".", true);
+            File.WriteAllText("version.txt", latestVersion.ToString());
+            Console.WriteLine("Done! Restarting...");
+            if (OperatingSystem.IsLinux()) Process.Start(new ProcessStartInfo { FileName = "aMogusManager", UseShellExecute = true });
+            if (OperatingSystem.IsWindows()) Process.Start(new ProcessStartInfo { FileName = "aMogusManager.exe", UseShellExecute = true });
+            Environment.Exit(0);
+        }
+        if (latestVersion == currentVersion) { 
+            Console.WriteLine("Up to date!");
+            await Task.Delay(1000);
+            return;     
+        }
     }
 }
