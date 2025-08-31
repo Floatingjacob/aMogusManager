@@ -352,7 +352,8 @@ What is your selection?: ");
         if (latestVersion > currentVersion)
         {
             Console.WriteLine($"There is an update avalible ({currentVersion} ==> {latestVersion}).\n Installing now...");
-            var update = await client.GetByteArrayAsync($"https://api.github.com/floatingjacob/amogusmanager/releases/download/{tag}/win-x86.zip/");
+            var update = await client.GetByteArrayAsync($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/windows.zip");
+
             if (OperatingSystem.IsLinux())
             {
                 update = await client.GetByteArrayAsync($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/linux.zip");
