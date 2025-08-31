@@ -39,6 +39,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="version.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="versions.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
