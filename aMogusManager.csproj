@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+	<AssemblyName>mainApplication</AssemblyName>
     <TargetFramework>net9.0</TargetFramework>
     <RootNamespace>c_</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -22,6 +23,15 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DebugType>portable</DebugType>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="bootstrap\**" />
+    <Compile Remove="old\**" />
+    <EmbeddedResource Remove="bootstrap\**" />
+    <EmbeddedResource Remove="old\**" />
+    <None Remove="bootstrap\**" />
+    <None Remove="old\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <Content Include="icon.ico" />

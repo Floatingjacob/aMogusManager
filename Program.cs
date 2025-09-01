@@ -37,9 +37,6 @@ class Program
             {
                 if (!File.Exists("gamefolder.txt")) File.WriteAllText($"{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local/share/Steam/steamapps/common/Among Us")}", "gamefolder.txt");
                 moguspath = File.ReadAllText("gamefolder.txt");
-                if (File.Exists("aMogusManager.old")) File.Delete("aMogusManager.old");
-                if (File.Exists("aMogusManager.pdb.old")) File.Delete("aMogusManager.pdb.old");
-                if (File.Exists("versions.json.old")) File.Delete("versions.json.old");
                 LinuxPrefix();
             }
             else if (OperatingSystem.IsWindows())
@@ -47,10 +44,6 @@ class Program
                 
                 if (!File.Exists("gamefolder.txt")) File.WriteAllText("gamefolder.txt", "C:/Program Files (x86)/Steam/steamapps/common/Among Us");
                 moguspath = File.ReadAllText("gamefolder.txt");
-                if (File.Exists("aMogusManager.exe.old")) File.Delete("aMogusManager.exe.old");
-                if (File.Exists("aMogusManager.pdb.old")) File.Delete("aMogusManager.pdb.old");
-                if (File.Exists("versions.json.old")) File.Delete("versions.json.old");
-
             }
 
             if (!File.Exists("mods.json")) File.WriteAllText("mods.json", "[]");
@@ -351,31 +344,25 @@ What is your selection?: ");
         Console.WriteLine("Checking for updates...");
         if (latestVersion > currentVersion)
         {
-            Console.WriteLine($"There is an update avalible ({currentVersion} ==> {latestVersion}).\n Installing now...");
+            Console.WriteLine($"There are update avalible ({currentVersion} ==> {latestVersion}).\n Installing now...");
             var update = await client.GetByteArrayAsync($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/windows.zip");
 
             if (OperatingSystem.IsLinux())
             {
                 update = await client.GetByteArrayAsync($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/linux.zip");
-                File.Move("aMogusManager", "aMogusManager.old");
-                File.Move("versions.json", "versions.json.old");
-                File.Move("aMogusManager.pdb", "aMogusManager.pdb.old");
+                await File.WriteAllBytesAsync("update.zip", update);
+                Process.Start(new ProcessStartInfo { FileName = "aMogusManager", UseShellExecute = true });
+                Environment.Exit(0);
             }
             else if (OperatingSystem.IsWindows())
             {
                 update = await client.GetByteArrayAsync($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/windows.zip");
-                File.Move("aMogusManager.exe", "aMogusManager.exe.old");
-                File.Move("versions.json", "versions.json.old");
-                File.Move("aMogusManager.pdb", "aMogusManager.pdb.old");
+                await File.WriteAllBytesAsync("update.zip", update);
+                Process.Start(new ProcessStartInfo { FileName = "aMogusManager.exe", UseShellExecute = true });
+
+                Environment.Exit(0);
             }
-            await File.WriteAllBytesAsync("update.zip", update);
-            //ZipFile.ExtractToDirectory(Path.Combine(AppContext.BaseDirectory, "update.zip"), AppContext.BaseDirectory, true); //Doesnt work for some reason
-            Process.Start(new ProcessStartInfo { UseShellExecute = true, FileName = "tar", Arguments = "-xf update.zip" }).WaitForExit();
-            File.WriteAllText("version.txt", latestVersion.ToString());
-            Console.WriteLine("Done! Restarting...");
-            if (OperatingSystem.IsLinux()) Process.Start(new ProcessStartInfo { FileName = "aMogusManager", UseShellExecute = true });
-            if (OperatingSystem.IsWindows()) Process.Start(new ProcessStartInfo { FileName = "aMogusManager.exe", UseShellExecute = true });
-            Environment.Exit(0);
+
         }
         else if (latestVersion == currentVersion) { 
             Console.WriteLine("Up to date!");
