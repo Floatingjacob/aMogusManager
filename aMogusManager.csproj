@@ -8,29 +8,37 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ApplicationIcon>icon.ico</ApplicationIcon>
-    <Title>aMogusManager</Title>
-    <SignAssembly>False</SignAssembly>
-    <PublishAot>False</PublishAot>
-    <GenerateDocumentationFile>False</GenerateDocumentationFile>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <PublishTrimmed>False</PublishTrimmed>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DebugType>portable</DebugType>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DebugType>portable</DebugType>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DebugType>portable</DebugType>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<DebugType>portable</DebugType>
+	</PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="aBootstrap\**" />
+    <Compile Remove="aDownloader\**" />
     <Compile Remove="bootstrap\**" />
+    <Compile Remove="DepotDownloader\**" />
     <Compile Remove="old\**" />
+    <Compile Remove="test\**" />
+    <EmbeddedResource Remove="aBootstrap\**" />
+    <EmbeddedResource Remove="aDownloader\**" />
     <EmbeddedResource Remove="bootstrap\**" />
+    <EmbeddedResource Remove="DepotDownloader\**" />
     <EmbeddedResource Remove="old\**" />
+    <EmbeddedResource Remove="test\**" />
+    <None Remove="aBootstrap\**" />
+    <None Remove="aDownloader\**" />
     <None Remove="bootstrap\**" />
+    <None Remove="DepotDownloader\**" />
     <None Remove="old\**" />
+    <None Remove="test\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,12 +51,19 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="aDownloader">
+      <HintPath>aDownloader.dll</HintPath>
+    </Reference>
     <Reference Include="DepotDownloader">
       <HintPath>DepotDownloader.dll</HintPath>
     </Reference>
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="icon.ico">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
     <None Update="version.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -6,15 +6,15 @@
  (pretty much, i just made everything in it's Program.cs file public)
  i know that this code probably gave someone a stroke when they saw it, so if you don't want others to be hospitalized, 
  consider improving it and making a pull request. 
- on second thought, if you want to hospitalize as many people as possible (cus you're a psycho),
+ On second thought, if you want to hospitalize as many people as possible (cus you're a psycho),
  consider spreading around my github profile. (https://github.com/floatingjacob/)
 
  */
-
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.IO.Compression;
-
+#pragma warning disable CS8602
+#pragma warning disable CS8618
 class Program
 {
     static bool interaction = false;
@@ -22,14 +22,12 @@ class Program
     static string moguspath;
     static string plugin;
     static string selectedversion;
-
     static async Task Main()
     {
-        
         interaction = true;
         while (true)
         {
-            
+
             Console.CursorVisible = true;
             Console.Clear();
             // Determines your OS and changes a few settings
@@ -41,7 +39,7 @@ class Program
             }
             else if (OperatingSystem.IsWindows())
             {
-                
+
                 if (!File.Exists("gamefolder.txt")) File.WriteAllText("gamefolder.txt", "C:/Program Files (x86)/Steam/steamapps/common/Among Us");
                 moguspath = File.ReadAllText("gamefolder.txt");
             }
@@ -63,15 +61,17 @@ What is your selection?: ");
             switch (choice)
             {
                 case 0: return;
-                case 1: Runmod(); break;
-                case 2: installfromzip(); break;
-                case 3: installplugin(); break;
-                case 4: installvanilla(); break;
-                case 5: RemoveMod(); break;
-                case 6: await updater(); break;
+                // case 1: runMod(); break;
+                case 1: runMod(); return;
+                case 2: installFromZip(); break;
+                case 3: installPlugin(); break;
+                case 4: installVanilla(); break;
+                case 5: removeMod(); break;
+                case 67: await updater(); break;
             }
-            if (interaction) { 
-                Console.WriteLine("Press any key to return to the main menu..."); 
+            if (interaction)
+            {
+                Console.WriteLine("Press any key to return to the main menu...");
                 Console.ReadKey();
             }
 
@@ -101,7 +101,7 @@ What is your selection?: ");
 
         foreach (JObject mogusmod in mods)
         {
-            string installDir = mogusmod["installDir"]?.ToString();
+            string installDir = mogusmod["installDir"].ToString();
             if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), installDir)))
                 toRemove.Add(mogusmod);
         }
@@ -114,17 +114,18 @@ What is your selection?: ");
         }
     }
 
-    static void Runmod()
+    static void runMod()
     {
+        interaction = false;
         JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
-        foreach (JObject mogusmod in mods) Console.WriteLine(mogusmod["name"]?.ToString());
+        foreach (JObject mogusmod in mods) Console.WriteLine(mogusmod["name"].ToString());
 
         Console.Write("What mod do you want to run?: ");
         string input = Console.ReadLine()?.Trim() ?? "";
 
         foreach (JObject mogusmod in mods)
         {
-            if (string.Equals(mogusmod["name"]?.ToString().Trim(), input, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(mogusmod["name"].ToString().Trim(), input, StringComparison.OrdinalIgnoreCase))
             {
                 if (Directory.Exists(moguspath)) Directory.Delete(moguspath, true);
 
@@ -160,11 +161,10 @@ What is your selection?: ");
         Console.WriteLine("Mod not found.");
     }
 
-    static void installfromzip()
+    static void installFromZip()
     {
         Console.Write("\nEnter the path to the mod's .zip file: ");
         zipmod = Console.ReadLine()?.Trim().Trim('"');
-
         if (string.IsNullOrWhiteSpace(zipmod))
         {
             Console.WriteLine("Error: .zip path cannot be empty.");
@@ -179,10 +179,10 @@ What is your selection?: ");
 
         foreach (JObject version in versions)
         {
-            if (input == version["version"]?.ToString())
+            if (input == version["version"].ToString())
             {
                 selectedversion = input;
-                DownloadInstance(version["manifestID"]?.ToString(), true);
+                DownloadInstance(version["manifestID"].ToString(), true);
                 return;
             }
         }
@@ -219,7 +219,10 @@ What is your selection?: ");
         {
             Console.Write("Enter your Steam username: "); // For some reason, DepotDownloader's built-in 'Enter Username' prompt doesn't show up.
             string input = Console.ReadLine();
-            DepotDownloader.Program.Main(new string[] { "-app", "945360", "-depot", "945361", "-remember-password", "-manifest", manifestID, "-dir", cacheDir, "-user", input }).Wait();
+
+            //DepotDownloader.Program.Main(new string[] { "-app", "945360", "-depot", "945361", "-remember-password", "-manifest", manifestID, "-dir", cacheDir, "-user", input }).Wait();
+            DepotDownloader.Program.Main(["-app", "945360", "-depot", "945361", "-remember-password", "-manifest", manifestID, "-dir", cacheDir, "-user", input]).Wait();
+
             foreach (var filePath in Directory.GetFiles(cacheDir, "*", SearchOption.AllDirectories))
             {
                 string relativePath = Path.GetRelativePath(cacheDir, filePath);
@@ -238,7 +241,7 @@ What is your selection?: ");
 
         if (modded)
         {
-            System.IO.Compression.ZipFile.ExtractToDirectory(zipmod, "tmp", true);
+            ZipFile.ExtractToDirectory(zipmod, "tmp", true);
             foreach (string dir in Directory.GetDirectories("tmp"))
             {
                 foreach (string f in Directory.GetFiles(dir, "*", SearchOption.AllDirectories))
@@ -255,19 +258,19 @@ What is your selection?: ");
         Console.WriteLine($"Instance '{instancename}' installed successfully.");
     }
 
-    static void RemoveMod()
+    static void removeMod()
     {
         JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
-        foreach (JObject mogusmod in mods) Console.WriteLine(mogusmod["name"]?.ToString());
+        foreach (JObject mogusmod in mods) Console.WriteLine(mogusmod["name"].ToString());
 
         Console.Write("What mod do you want to uninstall? ");
         string input = Console.ReadLine()?.Trim() ?? "";
 
         foreach (JObject mogusmod in mods)
         {
-            if (string.Equals(mogusmod["name"]?.ToString().Trim(), input, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(mogusmod["name"].ToString().Trim(), input, StringComparison.OrdinalIgnoreCase))
             {
-                Directory.Delete(mogusmod["installDir"]?.ToString() ?? "", true);
+                Directory.Delete(mogusmod["installDir"].ToString() ?? "", true);
                 mogusmod.Remove();
                 File.WriteAllText("mods.json", mods.ToString());
                 Console.WriteLine("Mod uninstalled.");
@@ -278,7 +281,7 @@ What is your selection?: ");
         Console.WriteLine("Mod not found.");
     }
 
-    static void installvanilla()
+    static void installVanilla()
     {
         JArray versions = JArray.Parse(File.ReadAllText("versions.json"));
         foreach (JObject version in versions) Console.WriteLine(version["version"]);
@@ -288,10 +291,10 @@ What is your selection?: ");
 
         foreach (JObject version in versions)
         {
-            if (input == version["version"]?.ToString())
+            if (input == version["version"].ToString())
             {
                 selectedversion = input;
-                DownloadInstance(version["manifestID"]?.ToString(), false);
+                DownloadInstance(version["manifestID"].ToString(), false);
                 return;
             }
         }
@@ -299,11 +302,11 @@ What is your selection?: ");
         Console.WriteLine("Error: Version not found.");
     }
 
-    static void installplugin()
+    static void installPlugin()
     {
-        // works kinda like installfromzip() but it doesn't create a new instance. instead, it just slaps some files onto an existing instance
+        // works kinda like installFromZip() but it doesn't create a new instance. instead, it just slaps some files onto an existing instance
         Console.Write("\nEnter the path to the plugin's .zip file: ");
-        plugin = Console.ReadLine()?.Trim().Trim('"');
+        plugin = Console.ReadLine().Trim().Trim('"');
 
         if (string.IsNullOrWhiteSpace(plugin))
         {
@@ -312,16 +315,16 @@ What is your selection?: ");
         }
 
         JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
-        foreach (JObject mogusmod in mods) Console.WriteLine(mogusmod["name"]?.ToString());
+        foreach (JObject mogusmod in mods) Console.WriteLine(mogusmod["name"].ToString());
 
         Console.Write("What instance of Among Us do you want to install this plugin to?: ");
         string input = Console.ReadLine()?.Trim() ?? "";
 
         foreach (JObject mogusmod in mods)
         {
-            if (string.Equals(mogusmod["name"]?.ToString().Trim(), input, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(mogusmod["name"].ToString().Trim(), input, StringComparison.OrdinalIgnoreCase))
             {
-                ZipFile.ExtractToDirectory(plugin, mogusmod["installDir"]?.ToString(), true);
+                ZipFile.ExtractToDirectory(plugin, mogusmod["installDir"].ToString(), true);
                 Console.WriteLine("Plugin installed successfully.");
                 return;
             }
@@ -329,45 +332,44 @@ What is your selection?: ");
 
         Console.WriteLine("Error: Instance not found.");
     }
-
-
-    static async Task updater() {
-        Console.Clear();   
+    
+    static async Task updater()
+    {
+        Console.Clear();
+        Console.WriteLine("Checking for updates...");
         interaction = false;
         var client = new HttpClient();
+        var downloader = new DownloadWithProgress(); // Totally didn't steal this off the internet and modify it
         client.DefaultRequestHeaders.Add("User-Agent", "aMogusManager/1.0");
         var response = await client.GetStringAsync("https://api.github.com/repos/floatingjacob/amogusmanager/releases/latest");
         string tag = JObject.Parse(response)["tag_name"].ToString();
         string version = await client.GetStringAsync($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/version.txt");
         Version currentVersion = new Version(File.ReadAllText("version.txt").Trim());
         Version latestVersion = new Version(version.Trim());
-        Console.WriteLine("Checking for updates...");
+
         if (latestVersion > currentVersion)
         {
             Console.WriteLine($"There are update avalible ({currentVersion} ==> {latestVersion}).\n Installing now...");
-            var update = await client.GetByteArrayAsync($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/windows.zip");
-
             if (OperatingSystem.IsLinux())
             {
-                update = await client.GetByteArrayAsync($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/linux.zip");
-                await File.WriteAllBytesAsync("update.zip", update);
+                // Fancy downloader
+                await downloader.Download($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/linux.zip", "update.zip");
                 Process.Start(new ProcessStartInfo { FileName = "aMogusManager", UseShellExecute = true });
                 Environment.Exit(0);
             }
             else if (OperatingSystem.IsWindows())
             {
-                update = await client.GetByteArrayAsync($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/windows.zip");
-                await File.WriteAllBytesAsync("update.zip", update);
+                // Fancy downloader
+                await downloader.Download($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/windows.zip", "update.zip");
                 Process.Start(new ProcessStartInfo { FileName = "aMogusManager.exe", UseShellExecute = true });
-
                 Environment.Exit(0);
             }
-
         }
-        else if (latestVersion == currentVersion) { 
+        else if (latestVersion == currentVersion)
+        {
             Console.WriteLine("Up to date!");
             await Task.Delay(1000);
-            return;     
+            return;
         }
     }
 }
