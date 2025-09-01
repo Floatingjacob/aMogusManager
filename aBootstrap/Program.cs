@@ -2,36 +2,45 @@
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Threading;
+using System.Threading.Tasks;
 
 Main();
 
-static void Main()
+static async Task Main()
 {
     Directory.SetCurrentDirectory(AppContext.BaseDirectory);
-
-    if (File.Exists("update.zip"))
+    if (Environment.GetCommandLineArgs().Length > 1)
     {
-        using (ZipArchive update = ZipFile.OpenRead("update.zip"))
+        string[] args = Environment.GetCommandLineArgs();
+        if (args[1] == "--update")
         {
-            foreach (ZipArchiveEntry file in update.Entries)
+            await Task.Delay(1000); // Wait a second to make sure the main app is closed
+            if (File.Exists("update.zip"))
             {
-                if (string.Equals(file.Name, "aMogusManager.exe", StringComparison.OrdinalIgnoreCase))
-                    continue;
-                if (string.Equals(file.Name, "aMogusManager.pdb", StringComparison.OrdinalIgnoreCase))
-                    continue;
-                if (string.Equals(file.Name, "aMogusManager", StringComparison.OrdinalIgnoreCase))
-                    continue;
-                string dest = Path.GetFullPath(Path.Combine(".", file.FullName));
-                Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
-                if (!string.IsNullOrEmpty(file.Name))
+                using (ZipArchive update = ZipFile.OpenRead("update.zip"))
                 {
-                    file.ExtractToFile(dest, overwrite: true);
+                    foreach (ZipArchiveEntry file in update.Entries)
+                    {
+                        if (string.Equals(file.Name, "aMogusManager.exe", StringComparison.OrdinalIgnoreCase))
+                            continue;
+                        if (string.Equals(file.Name, "aMogusManager.pdb", StringComparison.OrdinalIgnoreCase))
+                            continue;
+                        if (string.Equals(file.Name, "aMogusManager", StringComparison.OrdinalIgnoreCase))
+                            continue;
+                        string dest = Path.GetFullPath(Path.Combine(".", file.FullName));
+                        Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
+                        if (!string.IsNullOrEmpty(file.Name))
+                        {
+                            file.ExtractToFile(dest, overwrite: true);
+                        }
+                    }
                 }
+                File.Delete("update.zip");
             }
         }
-        File.Delete("update.zip");
     }
-
+    
     if (OperatingSystem.IsWindows())
         Process.Start(new ProcessStartInfo { UseShellExecute = true, FileName = "mainApplication.exe" });
     else if (OperatingSystem.IsLinux())

@@ -24,7 +24,15 @@ class Program
     static string selectedversion;
     static async Task Main()
     {
+        Directory.SetCurrentDirectory(AppContext.BaseDirectory);
+        if (File.Exists("bootstrap.zip")) 
+        {
+            Console.WriteLine("Updating bootstrap...");
+            ZipFile.ExtractToDirectory("bootstrap.zip", ".", true); 
+            File.Delete("bootstrap.zip"); 
+        }
         interaction = true;
+        await updater();
         while (true)
         {
 
@@ -46,7 +54,7 @@ class Program
 
             if (!File.Exists("mods.json")) File.WriteAllText("mods.json", "[]");
             pruneMods();
-            await updater();
+            
             Console.WriteLine("Welcome To aMogusManager");
             Console.Write(@"1. Run an installed instance Of Among Us
 2. Install a new mod from a .ZIP file
@@ -349,19 +357,21 @@ What is your selection?: ");
 
         if (latestVersion > currentVersion)
         {
-            Console.WriteLine($"There are update avalible ({currentVersion} ==> {latestVersion}).\n Installing now...");
+            Console.WriteLine($"There are updates avalible ({currentVersion} ==> {latestVersion}).\nDownloading...");
             if (OperatingSystem.IsLinux())
             {
                 // Fancy downloader
                 await downloader.Download($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/linux.zip", "update.zip");
-                Process.Start(new ProcessStartInfo { FileName = "aMogusManager", UseShellExecute = true });
+                Console.WriteLine("Installing...");
+                Process.Start(new ProcessStartInfo { FileName = "aMogusManager", Arguments = "--update", UseShellExecute = true });
                 Environment.Exit(0);
             }
             else if (OperatingSystem.IsWindows())
             {
                 // Fancy downloader
                 await downloader.Download($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/windows.zip", "update.zip");
-                Process.Start(new ProcessStartInfo { FileName = "aMogusManager.exe", UseShellExecute = true });
+                Console.WriteLine("Installing...");
+                Process.Start(new ProcessStartInfo { FileName = "aMogusManager.exe", Arguments = "--update", UseShellExecute = true });
                 Environment.Exit(0);
             }
         }
