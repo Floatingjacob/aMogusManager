@@ -1,23 +1,34 @@
 # aMogusManager
 
-
-I know there are already Among Us mod managers out there, but they either :
-
-
-1. don't work
-2. are annoying to use
-3. too sketchy
-4. are obselete 
-5. don't have the features i need
+I know there are already a lot of Among Us mod managers out there, **but hear me out**:
 
 
-So i decided to maky my own mod manager. like i said, there are lots of Among Us mod managers out there, so i named this "aMogusManager" because it is yet another mod manager.
+Most of them: Don't work, are annoying to use, obsolete, sketchier than that Nigerian prince asking for money, or lack the features I need.
 
+So… I made my own. I'm calling it **aMogusManager** because it it yet another Among Us mod manager.
 
-Currently, this only supports Windows and Linux. I don't have plans for adding MacOS support (cus it sucks.)
+---
 
-Note: if you need to change where the program looks for Steam's Among Us installation, edit 'gamefolder.txt'
+## Specs(?) 
 
+- Works on **Windows** and **Linux** (macOS users, get a real computer).  
+- Easyish mod installation.
+- Lets you install 'plugins' like [AUnlocker](https://github.com/astra1dev/AUnlocker)
+- Supports custom Steam Among Us installation paths (`gamefolder.txt`).  
+- Allows you to select a specific version of Among Us to automatically download.  
 
-This program will require you to authenticate with your Steam account to download new Among Us versions.
+---
 
+## License 📜
+
+This project is under the **GNU General Public License v3.0 (GPL-3.0)**. Translation for inspecifically specifically **YOU** :
+
+- ❌ You **cannot sell** this software without following the rules.  
+- 👤 You **must give original credit to me** if you modify it.  
+- 🔄 Any derivative work must also use the **GPL-3.0 license**.  
+
+Full license text here: [GPL-3.0 License](https://www.gnu.org/licenses/gpl-3.0.txt)  
+
+---
+
+aMogusManager: for when you want a manager that actually works… unlike that one crewmate who’s always 'venting'. 😏
