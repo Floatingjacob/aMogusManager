@@ -8,7 +8,8 @@ bin/*
 generateversions.py
 old/*
 
-
+windows.zip
+linux.zip
 # User-specific files
 *.rsuser
 *.suo

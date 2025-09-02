@@ -26,18 +26,21 @@
     <Compile Remove="bootstrap\**" />
     <Compile Remove="DepotDownloader\**" />
     <Compile Remove="old\**" />
+    <Compile Remove="Release\**" />
     <Compile Remove="test\**" />
     <EmbeddedResource Remove="aBootstrap\**" />
     <EmbeddedResource Remove="aDownloader\**" />
     <EmbeddedResource Remove="bootstrap\**" />
     <EmbeddedResource Remove="DepotDownloader\**" />
     <EmbeddedResource Remove="old\**" />
+    <EmbeddedResource Remove="Release\**" />
     <EmbeddedResource Remove="test\**" />
     <None Remove="aBootstrap\**" />
     <None Remove="aDownloader\**" />
     <None Remove="bootstrap\**" />
     <None Remove="DepotDownloader\**" />
     <None Remove="old\**" />
+    <None Remove="Release\**" />
     <None Remove="test\**" />
   </ItemGroup>
 
