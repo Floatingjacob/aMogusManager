@@ -1,4 +1,14 @@
-﻿using System;
+﻿/*
+  
+ This is the bootstrap for 'aMogusmanager'.
+ Pretty much, if it is launched with the '-update' flag and finds an 
+ update file (windows.zip, linux.zip) it installs it and then launches the main application.
+ Hopefuly, this code will not have as many medical side effects as the main application's code.
+
+ */
+
+
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;

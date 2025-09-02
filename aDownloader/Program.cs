@@ -1,7 +1,10 @@
 ﻿/*
+ 
  This code has been slightly modified by FloatingJacob.
  You can find the original code at https://webscraping.ai/faq/httpclient-c/is-it-possible-to-track-the-progress-of-a-download-using-httpclient-c
+
  */
+
 using System.Threading.Tasks;
 
 public class DownloadProgressTracker
@@ -47,9 +50,9 @@ public class DownloadProgress
     }
 }
 
+// I added this class here.
 public class DownloadWithProgress
 {
-
     public async Task Download(string url, string filePath)
     {
         int oldProgress = -1;

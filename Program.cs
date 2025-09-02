@@ -10,27 +10,29 @@
  consider spreading around my github profile. (https://github.com/floatingjacob/)
 
  */
+
+using c_;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.IO.Compression;
 #pragma warning disable CS8602
 #pragma warning disable CS8618
-class Program
+public class Program
 {
     static bool interaction = false;
     static string zipmod;
     static string moguspath;
-    static string plugin;
-    static string selectedversion;
+    //static string plugin;
+    //static string selectedversion;
     static async Task Main()
     {
         Directory.SetCurrentDirectory(AppContext.BaseDirectory);
-        if (File.Exists("bootstrap.zip")) 
+        if (File.Exists("bootstrap.zip"))
         {
-            await Task.Delay(200);
+            Thread.Sleep(200);
             Console.WriteLine("Updating bootstrap...");
-            ZipFile.ExtractToDirectory("bootstrap.zip", ".", true); 
-            File.Delete("bootstrap.zip"); 
+            ZipFile.ExtractToDirectory("bootstrap.zip", ".", true);
+            File.Delete("bootstrap.zip");
         }
         interaction = true;
         await updater();
@@ -55,7 +57,7 @@ class Program
 
             if (!File.Exists("mods.json")) File.WriteAllText("mods.json", "[]");
             pruneMods();
-            
+
             Console.WriteLine("Welcome To aMogusManager");
             Console.Write(@"1. Run an installed instance Of Among Us
 2. Install a new mod from a .ZIP file
@@ -72,19 +74,17 @@ What is your selection?: ");
                 case 0: return;
                 // case 1: runMod(); break;
                 case 1: runMod(); return;
-                case 2: installFromZip(); break;
-                case 3: installPlugin(); break;
-                case 4: installVanilla(); break;
+                case 2: installerStuffs.installMod(); break;
+                case 3: installerStuffs.installPlugin(); break;
+                case 4: installerStuffs.installVanilla(); break;
                 case 5: removeMod(); break;
-                case 67: await updater(); break;
+                case 67: await updater(); break; // Siiiix Seeeven
             }
             if (interaction)
             {
                 Console.WriteLine("Press any key to return to the main menu...");
                 Console.ReadKey();
             }
-
-
         }
     }
 
@@ -125,86 +125,62 @@ What is your selection?: ");
 
     static void runMod()
     {
+        bool modFound = false;
         interaction = false;
         JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
-        foreach (JObject mogusmod in mods) Console.WriteLine(mogusmod["name"].ToString());
-
-        Console.Write("What mod do you want to run?: ");
-        string input = Console.ReadLine()?.Trim() ?? "";
-
-        foreach (JObject mogusmod in mods)
+  
+        while (!modFound)
         {
-            if (string.Equals(mogusmod["name"].ToString().Trim(), input, StringComparison.OrdinalIgnoreCase))
+            Console.Clear();
+            for (int id = 0; id < mods.Count; id++)
             {
-                if (Directory.Exists(moguspath)) Directory.Delete(moguspath, true);
-
-                if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+                Console.WriteLine($"{id + 1}. {mods[id]["name"]}");
+            }
+            Console.Write("\nWhat mod do you want to run?: ");
+            if (int.TryParse(Console.ReadLine(), out int choice))
+            {
+                if (choice >= 1 && choice <= mods.Count)
                 {
-                    //does a ton of fancy stuff to create the symlink's cousion
-                    var junction = new ProcessStartInfo
+                    modFound = true;
+                    JObject mogusMod = (JObject)mods[choice - 1];
+                    if (Directory.Exists(moguspath)) Directory.Delete(moguspath, true);
+
+                    if (Environment.OSVersion.Platform == PlatformID.Win32NT)
                     {
-                        FileName = "cmd.exe",
-                        Arguments = $"/c mklink /J \"{moguspath}\" \"{Path.GetFullPath(".")}\\{mogusmod["installDir"]}\"",
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    };
-                    Process.Start(junction).WaitForExit();
-                }
-                else
-                {
-                    Directory.CreateSymbolicLink(moguspath, $"{Path.GetFullPath(".")}/{mogusmod["installDir"]}");
-                }
+                        //does a ton of fancy stuff to create the symlink's cousion
+                        var junction = new ProcessStartInfo
+                        {
+                            FileName = "cmd.exe",
+                            Arguments = $"/c mklink /J \"{moguspath}\" \"{Path.GetFullPath(".")}\\{mogusMod["installDir"]}\"",
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        };
+                        Process.Start(junction).WaitForExit();
+                    }
+                    else
+                    {
+                        Directory.CreateSymbolicLink(moguspath, $"{Path.GetFullPath(".")}/{mogusMod["installDir"]}");
+                    }
 
-                Process.Start(new ProcessStartInfo
-                {
-                    // launches Among Us though Steam so networking features work
-                    UseShellExecute = true,
-                    FileName = "steam://launch/945360"
-                });
-                Console.WriteLine($"Launching {mogusmod["name"]}...");
-                Thread.Sleep(2500);
-                return;
+                    Process.Start(new ProcessStartInfo
+                    {
+                        // launches Among Us though Steam so networking features work
+                        UseShellExecute = true,
+                        FileName = "steam://launch/945360"
+                    });
+                    Console.WriteLine($"Launching {mogusMod["name"]}...");
+                    Thread.Sleep(2500);
+                    return;
+                }
             }
         }
+
 
         Console.WriteLine("Mod not found.");
     }
-
-    static void installFromZip()
+    public static async Task DownloadInstance(string manifestID, bool modded, string selectedVersion, string instanceName)
     {
-        Console.Write("\nEnter the path to the mod's .zip file: ");
-        zipmod = Console.ReadLine()?.Trim().Trim('"');
-        if (string.IsNullOrWhiteSpace(zipmod))
-        {
-            Console.WriteLine("Error: .zip path cannot be empty.");
-            return;
-        }
-
-        JArray versions = JArray.Parse(File.ReadAllText("versions.json"));
-        foreach (JObject version in versions) Console.WriteLine(version["version"]);
-
-        Console.Write("What version of Among Us does this mod run on?: ");
-        string input = Console.ReadLine()?.Trim() ?? "";
-
-        foreach (JObject version in versions)
-        {
-            if (input == version["version"].ToString())
-            {
-                selectedversion = input;
-                DownloadInstance(version["manifestID"].ToString(), true);
-                return;
-            }
-        }
-
-        Console.WriteLine("Error: Version not found.");
-    }
-
-    static void DownloadInstance(string manifestID, bool modded)
-    {
-        Console.Write("What do you want to name this instance? ");
-        string instancename = Console.ReadLine()?.Trim() ?? "";
-
-        string cacheDir = $"cache/{selectedversion}";
+        string cacheDir = $"cache/{selectedVersion}";
 
         // If the version of Among Us was cached, skip downloading it from the internet
         if (Directory.Exists(cacheDir))
@@ -212,14 +188,14 @@ What is your selection?: ");
             foreach (var dirPath in Directory.GetDirectories(cacheDir, "*", SearchOption.AllDirectories))
             {
                 string relativePath = Path.GetRelativePath(cacheDir, dirPath);
-                string targetDir = Path.Combine($"instances/{instancename}", relativePath);
+                string targetDir = Path.Combine($"instances/{instanceName}", relativePath);
                 Directory.CreateDirectory(targetDir);
             }
 
             foreach (var filePath in Directory.GetFiles(cacheDir, "*", SearchOption.AllDirectories))
             {
                 string relativePath = Path.GetRelativePath(cacheDir, filePath);
-                string targetFile = Path.Combine($"instances/{instancename}", relativePath);
+                string targetFile = Path.Combine($"instances/{instanceName}", relativePath);
                 Directory.CreateDirectory(Path.GetDirectoryName(targetFile) ?? "");
                 File.Copy(filePath, targetFile, true);
             }
@@ -228,120 +204,48 @@ What is your selection?: ");
         {
             Console.Write("Enter your Steam username: "); // For some reason, DepotDownloader's built-in 'Enter Username' prompt doesn't show up.
             string input = Console.ReadLine();
-
-            //DepotDownloader.Program.Main(new string[] { "-app", "945360", "-depot", "945361", "-remember-password", "-manifest", manifestID, "-dir", cacheDir, "-user", input }).Wait();
             DepotDownloader.Program.Main(["-app", "945360", "-depot", "945361", "-remember-password", "-manifest", manifestID, "-dir", cacheDir, "-user", input]).Wait();
-
             foreach (var filePath in Directory.GetFiles(cacheDir, "*", SearchOption.AllDirectories))
             {
                 string relativePath = Path.GetRelativePath(cacheDir, filePath);
-                string targetFile = Path.Combine($"instances/{instancename}", relativePath);
+                string targetFile = Path.Combine($"instances/{instanceName}", relativePath);
                 Directory.CreateDirectory(Path.GetDirectoryName(targetFile) ?? "");
                 File.Copy(filePath, targetFile, true);
             }
         }
-        // a ton of fancy nothings
-        JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
-        mods.Add(new JObject(
-            new JProperty("name", instancename),
-            new JProperty("installDir", $"./instances/{instancename}")
-        ));
-        File.WriteAllText("mods.json", mods.ToString());
+    }
 
-        if (modded)
+    static async Task removeMod()
+    {
+        bool instanceFound = false;
+        
+        while (!instanceFound)
         {
-            ZipFile.ExtractToDirectory(zipmod, "tmp", true);
-            foreach (string dir in Directory.GetDirectories("tmp"))
+            Console.Clear();
+            JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
+            for (int id = 0; id < mods.Count; id++)
             {
-                foreach (string f in Directory.GetFiles(dir, "*", SearchOption.AllDirectories))
+                Console.WriteLine($"{id + 1}. {mods[id]["name"]}");
+            }
+            Console.Write("\nWhat mod do you want to uninstall?: ");
+            if (int.TryParse(Console.ReadLine(), out int choice))
+            {
+                if (choice >= 1 && choice <= mods.Count)
                 {
-                    string relPath = f.Substring(dir.Length).TrimStart(Path.DirectorySeparatorChar);
-                    string dest = Path.Combine($"./instances/{instancename}", relPath);
-                    Directory.CreateDirectory(Path.GetDirectoryName(dest) ?? "");
-                    File.Copy(f, dest, true);
+                    JObject mogusMod = (JObject)mods[choice - 1];
+                    Directory.Delete(mogusMod["installDir"].ToString() ?? "", true);
+                    mogusMod.Remove();
+                    File.WriteAllText("mods.json", mods.ToString());
+                    Console.WriteLine("Mod uninstalled.");
+                    Thread.Sleep(2000);
+                    return;
                 }
             }
-            Directory.Delete("tmp", true);
+
+
         }
 
-        Console.WriteLine($"Instance '{instancename}' installed successfully.");
     }
-
-    static void removeMod()
-    {
-        JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
-        foreach (JObject mogusmod in mods) Console.WriteLine(mogusmod["name"].ToString());
-
-        Console.Write("What mod do you want to uninstall? ");
-        string input = Console.ReadLine()?.Trim() ?? "";
-
-        foreach (JObject mogusmod in mods)
-        {
-            if (string.Equals(mogusmod["name"].ToString().Trim(), input, StringComparison.OrdinalIgnoreCase))
-            {
-                Directory.Delete(mogusmod["installDir"].ToString() ?? "", true);
-                mogusmod.Remove();
-                File.WriteAllText("mods.json", mods.ToString());
-                Console.WriteLine("Mod uninstalled.");
-                return;
-            }
-        }
-
-        Console.WriteLine("Mod not found.");
-    }
-
-    static void installVanilla()
-    {
-        JArray versions = JArray.Parse(File.ReadAllText("versions.json"));
-        foreach (JObject version in versions) Console.WriteLine(version["version"]);
-
-        Console.Write("What version of Among Us do you want to install?: ");
-        string input = Console.ReadLine()?.Trim() ?? "";
-
-        foreach (JObject version in versions)
-        {
-            if (input == version["version"].ToString())
-            {
-                selectedversion = input;
-                DownloadInstance(version["manifestID"].ToString(), false);
-                return;
-            }
-        }
-
-        Console.WriteLine("Error: Version not found.");
-    }
-
-    static void installPlugin()
-    {
-        // works kinda like installFromZip() but it doesn't create a new instance. instead, it just slaps some files onto an existing instance
-        Console.Write("\nEnter the path to the plugin's .zip file: ");
-        plugin = Console.ReadLine().Trim().Trim('"');
-
-        if (string.IsNullOrWhiteSpace(plugin))
-        {
-            Console.WriteLine("Error: .zip path cannot be empty.");
-            return;
-        }
-
-        JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
-        foreach (JObject mogusmod in mods) Console.WriteLine(mogusmod["name"].ToString());
-
-        Console.Write("What instance of Among Us do you want to install this plugin to?: ");
-        string input = Console.ReadLine()?.Trim() ?? "";
-
-        foreach (JObject mogusmod in mods)
-        {
-            if (string.Equals(mogusmod["name"].ToString().Trim(), input, StringComparison.OrdinalIgnoreCase))
-            {
-                ZipFile.ExtractToDirectory(plugin, mogusmod["installDir"].ToString(), true);
-                Console.WriteLine("Plugin installed successfully.");
-                return;
-            }
-        }
-
-        Console.WriteLine("Error: Instance not found.");
-    }
-    
     static async Task updater()
     {
         Console.Clear();
@@ -377,7 +281,7 @@ What is your selection?: ");
         else if (latestVersion == currentVersion)
         {
             Console.WriteLine("Up to date!");
-            await Task.Delay(1000);
+            Thread.Sleep(1000);
             return;
         }
     }
