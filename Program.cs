@@ -19,11 +19,9 @@ using System.IO.Compression;
 #pragma warning disable CS8618
 public class Program
 {
+
     static bool interaction = false;
-    static string zipmod;
     static string moguspath;
-    //static string plugin;
-    //static string selectedversion;
     static async Task Main()
     {
         Directory.SetCurrentDirectory(AppContext.BaseDirectory);
@@ -34,30 +32,27 @@ public class Program
             ZipFile.ExtractToDirectory("bootstrap.zip", ".", true);
             File.Delete("bootstrap.zip");
         }
+        // Determines your OS and changes a few settings
+        if (OperatingSystem.IsLinux())
+        {
+            if (!File.Exists("gamefolder.txt")) File.WriteAllText("gamefolder.txt", $"{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local/share/Steam/steamapps/common/Among Us")}");
+            moguspath = File.ReadAllText("gamefolder.txt");
+            await LinuxPrefix();
+        }
+        else if (OperatingSystem.IsWindows())
+        {
+            if (!File.Exists("gamefolder.txt")) File.WriteAllText("gamefolder.txt", "C:/Program Files (x86)/Steam/steamapps/common/Among Us");
+            moguspath = File.ReadAllText("gamefolder.txt");
+        }
+
+        if (!File.Exists("mods.json")) File.WriteAllText("mods.json", "[]");
+        pruneMods();
         interaction = true;
         await updater();
         while (true)
         {
-
             Console.CursorVisible = true;
             Console.Clear();
-            // Determines your OS and changes a few settings
-            if (OperatingSystem.IsLinux())
-            {
-                if (!File.Exists("gamefolder.txt")) File.WriteAllText($"{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local/share/Steam/steamapps/common/Among Us")}", "gamefolder.txt");
-                moguspath = File.ReadAllText("gamefolder.txt");
-                LinuxPrefix();
-            }
-            else if (OperatingSystem.IsWindows())
-            {
-
-                if (!File.Exists("gamefolder.txt")) File.WriteAllText("gamefolder.txt", "C:/Program Files (x86)/Steam/steamapps/common/Among Us");
-                moguspath = File.ReadAllText("gamefolder.txt");
-            }
-
-            if (!File.Exists("mods.json")) File.WriteAllText("mods.json", "[]");
-            pruneMods();
-
             Console.WriteLine("Welcome To aMogusManager");
             Console.Write(@"1. Run an installed instance Of Among Us
 2. Install a new mod from a .ZIP file
@@ -68,16 +63,14 @@ public class Program
 What is your selection?: ");
 
             if (!int.TryParse(Console.ReadLine(), out int choice)) continue;
-
             switch (choice)
             {
                 case 0: return;
-                // case 1: runMod(); break;
-                case 1: runMod(); return;
-                case 2: installerStuffs.installMod(); break;
-                case 3: installerStuffs.installPlugin(); break;
-                case 4: installerStuffs.installVanilla(); break;
-                case 5: removeMod(); break;
+                case 1: runMod(); break;
+                case 2: await installerStuffs.installMod(); break;
+                case 3: await installerStuffs.installPlugin(); break;
+                case 4: await installerStuffs.installVanilla(); break;
+                case 5: await removeMod(); break;
                 case 67: await updater(); break; // Siiiix Seeeven
             }
             if (interaction)
@@ -88,22 +81,51 @@ What is your selection?: ");
         }
     }
 
-    static void LinuxPrefix()
+    static async Task LinuxPrefix()
     {
-        if (!File.Exists(".prefix`d") || int.Parse(File.ReadAllText(".prefix`d")) > 10)
+
+        if (!File.Exists("prefix`d"))
         {
-            string homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            string prefix = Path.Combine(homeDir, ".local/share/Steam/steamapps/compatdata/945360/pfx");
-            Process.Start("/bin/bash", $"-c WINEDEBUG=-all WINEPREFIX='{prefix}' wine reg add HKCU\\Software\\Wine\\DllOverrides /v winhttp /d native,builtin /f >/dev/null 2>error.log").WaitForExit();
-            File.WriteAllText(".prefix`d", "1");
-        }
-        else if (int.Parse(File.ReadAllText(".prefix`d")) < 10)
-        {
-            File.WriteAllText(".prefix`d", $"{int.Parse(File.ReadAllText(".prefix`d")) + 1}");
+            var detectWine = Process.Start(new ProcessStartInfo { FileName = "dpkg", Arguments = "-s wine64", RedirectStandardError = true, RedirectStandardOutput = true });
+            detectWine.WaitForExit();
+            if (detectWine.ExitCode == 0)
+            {
+                Console.WriteLine("Wine detected!");
+                Console.WriteLine("Setting up Wine prefix...");
+                string homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                string prefix = Path.Combine(homeDir, ".local/share/Steam/steamapps/compatdata/945360/pfx");
+                Process.Start(new ProcessStartInfo { FileName = "/bin/bash", Arguments = $"-c \"WINEPREFIX={prefix} wine reg add HKCU\\\\Software\\\\Wine\\\\DllOverrides /v winhttp /d native,builtin /f\"", UseShellExecute = true }).WaitForExit();
+                File.Create("prefix`d");
+                Thread.Sleep(2000);
+            }
+            else
+            {
+                Console.Write("Wine is required to run this program and is not installed on your system.\nInstall now? (y/N): ");
+                if (Console.ReadLine().ToLower().StartsWith("y"))
+                {
+                    var installWine = Process.Start(new ProcessStartInfo { FileName = "sudo", Arguments = "apt install wine64 -y" });
+                    installWine.WaitForExit();
+                    if (installWine.ExitCode == 0)
+                    {
+                        Console.Clear();
+                        Console.WriteLine("Wine installed successfully! Please relaunch this program.");
+                        Thread.Sleep(5000);
+
+                        Environment.Exit(0);
+                    }
+                }
+                else
+                {
+                    Console.Clear();
+                    Console.WriteLine("Wine is required to run this program and has not been installed.\nBye!");
+                    Thread.Sleep(2500);
+                    Environment.Exit(0);
+                }
+            }
         }
     }
 
-    static void pruneMods()
+    static void pruneMods() // Automatically removes mod entries if their install directory does not exist.
     {
         JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
         var toRemove = new List<JObject>();
@@ -123,12 +145,13 @@ What is your selection?: ");
         }
     }
 
-    static void runMod()
+    static void runMod() // Runs mods (duh)
     {
         bool modFound = false;
+        string input;
         interaction = false;
         JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
-  
+
         while (!modFound)
         {
             Console.Clear();
@@ -136,8 +159,11 @@ What is your selection?: ");
             {
                 Console.WriteLine($"{id + 1}. {mods[id]["name"]}");
             }
-            Console.Write("\nWhat mod do you want to run?: ");
-            if (int.TryParse(Console.ReadLine(), out int choice))
+            Console.Write("\nWhat mod do you want to run (empty to cancel)?: ");
+
+            if (string.IsNullOrWhiteSpace(input = Console.ReadLine())) return;
+
+            else if (int.TryParse(input, out int choice))
             {
                 if (choice >= 1 && choice <= mods.Count)
                 {
@@ -147,7 +173,7 @@ What is your selection?: ");
 
                     if (Environment.OSVersion.Platform == PlatformID.Win32NT)
                     {
-                        //does a ton of fancy stuff to create the symlink's cousion
+                        // Does a ton of fancy stuff to create the symlink's cousion 
                         var junction = new ProcessStartInfo
                         {
                             FileName = "cmd.exe",
@@ -170,19 +196,16 @@ What is your selection?: ");
                     });
                     Console.WriteLine($"Launching {mogusMod["name"]}...");
                     Thread.Sleep(2500);
-                    return;
+                    Environment.Exit(0);
                 }
             }
         }
-
-
         Console.WriteLine("Mod not found.");
     }
     public static async Task DownloadInstance(string manifestID, bool modded, string selectedVersion, string instanceName)
     {
         string cacheDir = $"cache/{selectedVersion}";
 
-        // If the version of Among Us was cached, skip downloading it from the internet
         if (Directory.Exists(cacheDir))
         {
             foreach (var dirPath in Directory.GetDirectories(cacheDir, "*", SearchOption.AllDirectories))
@@ -218,7 +241,7 @@ What is your selection?: ");
     static async Task removeMod()
     {
         bool instanceFound = false;
-        
+
         while (!instanceFound)
         {
             Console.Clear();
@@ -241,10 +264,7 @@ What is your selection?: ");
                     return;
                 }
             }
-
-
         }
-
     }
     static async Task updater()
     {

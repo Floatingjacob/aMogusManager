@@ -45,6 +45,8 @@ if (args.Length > 0 && args[0] == "-update")
 if (OperatingSystem.IsWindows())
     Process.Start(new ProcessStartInfo { UseShellExecute = true, FileName = "mainApplication.exe" });
 else if (OperatingSystem.IsLinux())
-    Process.Start(new ProcessStartInfo { UseShellExecute = true, FileName = "mainApplication" });
+   // Process.Start(new ProcessStartInfo { UseShellExecute = true, FileName = "mainApplication" }); // This doesn't want to work for some reason.
+   
+    Process.Start(new ProcessStartInfo { UseShellExecute = true, FileName = "x-terminal-emulator", Arguments = "-e ./mainApplication" });
 
 Environment.Exit(0);

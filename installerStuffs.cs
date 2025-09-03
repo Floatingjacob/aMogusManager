@@ -37,7 +37,7 @@ namespace c_
                     {
                         versionFound = true;
                         selectedVersion = input;
-                       await Program.DownloadInstance(version["manifestID"].ToString(), false, selectedVersion, instanceName);
+                        await Program.DownloadInstance(version["manifestID"].ToString(), false, selectedVersion, instanceName);
 
                         JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
                         mods.Add(new JObject(
@@ -70,7 +70,7 @@ namespace c_
                 Console.Clear();
                 JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
                 // foreach (JObject mogusmod in mods) Console.WriteLine(mogusmod["name"].ToString());
-                
+
                 for (int id = 0; id < mods.Count; id++)
                 {
                     Console.WriteLine($"{id + 1}. {mods[id]["name"]}");

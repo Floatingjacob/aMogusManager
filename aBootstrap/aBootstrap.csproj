@@ -9,4 +9,14 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="aDownloader">
+      <HintPath>..\aDownloader.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
