@@ -1,7 +1,7 @@
 ﻿/*
  
  This file contains most of the stuff relating to installing instances of Among Us.
- This file was created by FloatingJacob (who else could've done it?)
+ This file was created by FloatingJacob (who else could've done it so messily?)
  
  */
 
@@ -23,7 +23,7 @@ namespace c_
             JArray versions = JArray.Parse(File.ReadAllText("versions.json"));
             Console.Write("What do you want to name this instance?: ");
             instanceName = Console.ReadLine();
-
+            if (string.IsNullOrWhiteSpace(instanceName = Console.ReadLine())) return;
             while (!versionFound)
             {
                 Console.Clear();
@@ -40,7 +40,7 @@ namespace c_
                         await Program.DownloadInstance(version["manifestID"].ToString(), false, selectedVersion, instanceName);
 
                         JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
-                        mods.Add(new JObject(
+                        mods.Add(new JObject( // Creates a new mod entry
                             new JProperty("name", instanceName),
                             new JProperty("installDir", $"./instances/{instanceName}")
                         ));
@@ -57,19 +57,14 @@ namespace c_
             Console.Clear();
             Console.Write("Enter the path to the plugin's .zip file: ");
             bool instanceFound = false;
-            plugin = Console.ReadLine().Trim().Trim('"');
+            plugin = Console.ReadLine().Trim().Trim('"').Trim('\'');
 
-            if (string.IsNullOrWhiteSpace(plugin))
-            {
-                Console.WriteLine("Error: .zip path cannot be empty.");
-                return;
-            }
+            if (string.IsNullOrWhiteSpace(plugin = Console.ReadLine())) return;
 
             while (!instanceFound)
             {
                 Console.Clear();
                 JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
-                // foreach (JObject mogusmod in mods) Console.WriteLine(mogusmod["name"].ToString());
 
                 for (int id = 0; id < mods.Count; id++)
                 {
@@ -90,7 +85,6 @@ namespace c_
             }
         }
 
-
         public static async Task installMod()
         {
             bool versionFound = false;
@@ -100,20 +94,15 @@ namespace c_
             instanceName = Console.ReadLine();
 
             Console.Write("Enter the path to the mod's .zip file: ");
-            zipMod = Console.ReadLine()?.Trim().Trim('"');
-            if (string.IsNullOrWhiteSpace(zipMod))
-            {
-                Console.WriteLine("Error: .zip path cannot be empty.");
-                return;
-            }
+            zipMod = Console.ReadLine()?.Trim().Trim('"').Trim('\'');
+            if (string.IsNullOrWhiteSpace(zipMod = Console.ReadLine())) return;
             JArray versions = JArray.Parse(File.ReadAllText("versions.json"));
             while (!versionFound)
             {
                 Console.Clear();
                 foreach (JObject version in versions) Console.WriteLine(version["version"]);
-
                 Console.Write("What version of Among Us does this mod run on?: ");
-                string input = Console.ReadLine()?.Trim() ?? "";
+                string input = Console.ReadLine();
 
                 foreach (JObject version in versions)
                 {
@@ -123,7 +112,6 @@ namespace c_
                         versionFound = true;
                         await Program.DownloadInstance(version["manifestID"].ToString(), true, selectedVersion, instanceName);
                         break;
-
                     }
                 }
             }

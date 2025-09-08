@@ -21,11 +21,11 @@ public class Program
 {
 
     static bool interaction = false;
-    static string moguspath;
-    static async Task Main()
+    static string mogusPath;
+    static async Task Main(string[] args)
     {
         Directory.SetCurrentDirectory(AppContext.BaseDirectory);
-        if (File.Exists("bootstrap.zip"))
+        if (File.Exists("bootstrap.zip")) // Automatically updates the bootstrap.
         {
             Thread.Sleep(200);
             Console.WriteLine("Updating bootstrap...");
@@ -36,41 +36,45 @@ public class Program
         if (OperatingSystem.IsLinux())
         {
             if (!File.Exists("gamefolder.txt")) File.WriteAllText("gamefolder.txt", $"{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local/share/Steam/steamapps/common/Among Us")}");
-            moguspath = File.ReadAllText("gamefolder.txt");
+            mogusPath = File.ReadAllText("gamefolder.txt");
             await LinuxPrefix();
         }
         else if (OperatingSystem.IsWindows())
         {
             if (!File.Exists("gamefolder.txt")) File.WriteAllText("gamefolder.txt", "C:/Program Files (x86)/Steam/steamapps/common/Among Us");
-            moguspath = File.ReadAllText("gamefolder.txt");
+            mogusPath = File.ReadAllText("gamefolder.txt");
         }
 
-        if (!File.Exists("mods.json")) File.WriteAllText("mods.json", "[]");
+        if (!File.Exists("mods.json")) File.WriteAllText("mods.json", "[]"); // If the mod file doesn't exist, create an empty one to prevent errors.
         pruneMods();
         interaction = true;
-        await updater();
+        if (args.Length > 0 && args[0] != "-noupdate")
+            await updater();
         while (true)
         {
             Console.CursorVisible = true;
             Console.Clear();
-            Console.WriteLine("Welcome To aMogusManager");
-            Console.Write(@"1. Run an installed instance Of Among Us
-2. Install a new mod from a .ZIP file
-3. Install a plugin to an instance of Among Us
-4. Install vanilla Among Us
-5. Uninstall a mod
-0. Exit
+            Console.WriteLine("Welcome to aMogusManager.");
+            Console.Write(@"
+   1. Run an installed instance Of Among Us
+   2. Install a new mod from a .ZIP file
+   3. Install a plugin to an instance of Among Us
+   4. Install vanilla Among Us
+   5. Uninstall a mod
+   6. Change Steam's Among Us installation path
+   0. Exit
 What is your selection?: ");
 
             if (!int.TryParse(Console.ReadLine(), out int choice)) continue;
             switch (choice)
             {
-                case 0: return;
+                case 0: Environment.Exit(0); return;
                 case 1: runMod(); break;
                 case 2: await installerStuffs.installMod(); break;
                 case 3: await installerStuffs.installPlugin(); break;
                 case 4: await installerStuffs.installVanilla(); break;
                 case 5: await removeMod(); break;
+                case 6: await changePath(); break;
                 case 67: await updater(); break; // Siiiix Seeeven
             }
             if (interaction)
@@ -83,13 +87,13 @@ What is your selection?: ");
 
     static async Task LinuxPrefix()
     {
-
         if (!File.Exists("prefix`d"))
         {
             var detectWine = Process.Start(new ProcessStartInfo { FileName = "dpkg", Arguments = "-s wine64", RedirectStandardError = true, RedirectStandardOutput = true });
             detectWine.WaitForExit();
             if (detectWine.ExitCode == 0)
             {
+                // This whole thing makes it so the mods actually appear inside Among Us.
                 Console.WriteLine("Wine detected!");
                 Console.WriteLine("Setting up Wine prefix...");
                 string homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -110,7 +114,6 @@ What is your selection?: ");
                         Console.Clear();
                         Console.WriteLine("Wine installed successfully! Please relaunch this program.");
                         Thread.Sleep(5000);
-
                         Environment.Exit(0);
                     }
                 }
@@ -124,7 +127,6 @@ What is your selection?: ");
             }
         }
     }
-
     static void pruneMods() // Automatically removes mod entries if their install directory does not exist.
     {
         JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
@@ -159,7 +161,7 @@ What is your selection?: ");
             {
                 Console.WriteLine($"{id + 1}. {mods[id]["name"]}");
             }
-            Console.Write("\nWhat mod do you want to run (empty to cancel)?: ");
+            Console.Write("\nWhat mod do you want to run? (Leave empty to cancel): ");
 
             if (string.IsNullOrWhiteSpace(input = Console.ReadLine())) return;
 
@@ -169,15 +171,15 @@ What is your selection?: ");
                 {
                     modFound = true;
                     JObject mogusMod = (JObject)mods[choice - 1];
-                    if (Directory.Exists(moguspath)) Directory.Delete(moguspath, true);
+                    if (Directory.Exists(mogusPath)) Directory.Delete(mogusPath, true);
 
                     if (Environment.OSVersion.Platform == PlatformID.Win32NT)
                     {
-                        // Does a ton of fancy stuff to create the symlink's cousion 
+                        // Does a ton of fancy stuff to create a junction (a folder-only symlink) 
                         var junction = new ProcessStartInfo
                         {
                             FileName = "cmd.exe",
-                            Arguments = $"/c mklink /J \"{moguspath}\" \"{Path.GetFullPath(".")}\\{mogusMod["installDir"]}\"",
+                            Arguments = $"/c mklink /J \"{mogusPath}\" \"{Path.GetFullPath(".")}\\{mogusMod["installDir"]}\"",
                             UseShellExecute = false,
                             CreateNoWindow = true
                         };
@@ -185,7 +187,8 @@ What is your selection?: ");
                     }
                     else
                     {
-                        Directory.CreateSymbolicLink(moguspath, $"{Path.GetFullPath(".")}/{mogusMod["installDir"]}");
+                        // It's easier on linux cus you don't normally need admin perms.
+                        Directory.CreateSymbolicLink(mogusPath, $"{Path.GetFullPath(".")}/{mogusMod["installDir"]}");
                     }
 
                     Process.Start(new ProcessStartInfo
@@ -241,7 +244,7 @@ What is your selection?: ");
     static async Task removeMod()
     {
         bool instanceFound = false;
-
+        string input;
         while (!instanceFound)
         {
             Console.Clear();
@@ -250,8 +253,9 @@ What is your selection?: ");
             {
                 Console.WriteLine($"{id + 1}. {mods[id]["name"]}");
             }
-            Console.Write("\nWhat mod do you want to uninstall?: ");
-            if (int.TryParse(Console.ReadLine(), out int choice))
+            Console.Write("\nWhat mod do you want to uninstall? (Leave empty to cancel): ");
+            if (string.IsNullOrWhiteSpace(input = Console.ReadLine())) return;
+            if (int.TryParse(input, out int choice))
             {
                 if (choice >= 1 && choice <= mods.Count)
                 {
@@ -268,12 +272,13 @@ What is your selection?: ");
     }
     static async Task updater()
     {
+        // Sorry about all the messy variables.
         Console.Clear();
         Console.WriteLine("Checking for updates...");
         interaction = false;
         var client = new HttpClient();
         var downloader = new DownloadWithProgress(); // Totally didn't steal this off the internet and modify it
-        client.DefaultRequestHeaders.Add("User-Agent", "aMogusManager/1.0");
+        client.DefaultRequestHeaders.Add("User-Agent", "aMogusManager/1.0"); // Github requires a user agent header
         var response = await client.GetStringAsync("https://api.github.com/repos/floatingjacob/amogusmanager/releases/latest");
         string tag = JObject.Parse(response)["tag_name"].ToString();
         string version = await client.GetStringAsync($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/version.txt");
@@ -303,6 +308,27 @@ What is your selection?: ");
             Console.WriteLine("Up to date!");
             Thread.Sleep(1000);
             return;
+        }
+    }
+
+    static async Task changePath()
+    {
+        string input;
+        Console.Clear();
+        Console.Write("Enter the path to Steam's Among Us folder: ");
+        while (string.IsNullOrWhiteSpace(input = Console.ReadLine()))
+        {
+            Console.Clear();
+            Console.Write("Enter the path to Steam's Among Us folder: ");
+        }
+
+        if (!string.IsNullOrWhiteSpace(input))
+        {
+            interaction = false;
+            input = input.Trim().Trim('"').Trim('\'');
+            Console.WriteLine($"The manager will now assume Among Us is installed at \"{input}\".");
+            File.WriteAllText("gamefolder.txt", input);
+            Thread.Sleep(3000);
         }
     }
 }

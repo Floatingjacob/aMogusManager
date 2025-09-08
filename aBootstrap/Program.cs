@@ -2,7 +2,7 @@
   
  This is the bootstrap for 'aMogusmanager'.
  Pretty much, if it is launched with the '-update' flag and finds an 
- update file (windows.zip, linux.zip) it installs it and then launches the main application.
+ update file (update.zip, update.zip) it installs it and then launches the main application.
  Hopefuly, this code will not have as many medical side effects as the main application's code.
 
  */
@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 
 Directory.SetCurrentDirectory(AppContext.BaseDirectory);
 
-if (args.Length > 0 && args[0] == "-update")
+if (args.Length > 0 && args[0] == "-update") // Ooh...Fancy...
 {
     await Task.Delay(1000);
     if (File.Exists("update.zip"))
