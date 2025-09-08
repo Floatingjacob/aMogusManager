@@ -95,7 +95,7 @@ namespace c_
 
             Console.Write("Enter the path to the mod's .zip file: ");
             zipMod = Console.ReadLine()?.Trim().Trim('"').Trim('\'');
-            if (string.IsNullOrWhiteSpace(zipMod = Console.ReadLine())) return;
+            if (string.IsNullOrWhiteSpace(zipMod)) return;
             JArray versions = JArray.Parse(File.ReadAllText("versions.json"));
             while (!versionFound)
             {
