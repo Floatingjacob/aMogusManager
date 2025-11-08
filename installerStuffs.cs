@@ -59,7 +59,7 @@ namespace c_
             bool instanceFound = false;
             plugin = Console.ReadLine().Trim().Trim('"').Trim('\'');
 
-            if (string.IsNullOrWhiteSpace(plugin = Console.ReadLine())) return;
+            if (string.IsNullOrWhiteSpace(plugin)) return;
 
             while (!instanceFound)
             {
