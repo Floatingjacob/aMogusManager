@@ -17,6 +17,9 @@ using System.Diagnostics;
 using System.IO.Compression;
 #pragma warning disable CS8602
 #pragma warning disable CS8618
+#pragma warning disable CS8600
+#pragma warning disable CS1998
+#pragma warning disable IDE1006
 public class Program
 {
 
@@ -63,6 +66,7 @@ public class Program
    5. Uninstall a mod
    6. Change Steam's Among Us installation path
    0. Exit
+
 What is your selection?: ");
 
             if (!int.TryParse(Console.ReadLine(), out int choice)) continue;
@@ -126,6 +130,7 @@ What is your selection?: ");
                 }
             }
         }
+        
     }
     static void pruneMods() // Automatically removes mod entries if their install directory does not exist.
     {
@@ -162,8 +167,8 @@ What is your selection?: ");
                 Console.WriteLine($"{id + 1}. {mods[id]["name"]}");
             }
             Console.Write("\nWhat mod do you want to run? (Leave empty to cancel): ");
-
-            if (string.IsNullOrWhiteSpace(input = Console.ReadLine())) return;
+            input = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(input)) return;
 
             else if (int.TryParse(input, out int choice))
             {
@@ -171,6 +176,7 @@ What is your selection?: ");
                 {
                     modFound = true;
                     JObject mogusMod = (JObject)mods[choice - 1];
+
                     if (Directory.Exists(mogusPath)) Directory.Delete(mogusPath, true);
 
                     if (Environment.OSVersion.Platform == PlatformID.Win32NT)

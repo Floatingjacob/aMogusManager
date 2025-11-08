@@ -1,7 +1,7 @@
 ﻿/*
  
  This file contains most of the stuff relating to installing instances of Among Us.
- This file was created by FloatingJacob (who else could've done it so messily?)
+ This file was created by FloatingJacob (who else, besides Meta, could've done it so messily?)
  
  */
 
@@ -23,7 +23,7 @@ namespace c_
             JArray versions = JArray.Parse(File.ReadAllText("versions.json"));
             Console.Write("What do you want to name this instance?: ");
             instanceName = Console.ReadLine();
-            if (string.IsNullOrWhiteSpace(instanceName = Console.ReadLine())) return;
+            if (string.IsNullOrWhiteSpace(instanceName)) return;
             while (!versionFound)
             {
                 Console.Clear();

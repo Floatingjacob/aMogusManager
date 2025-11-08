@@ -2,8 +2,7 @@
   
  This is the bootstrap for 'aMogusmanager'.
  Pretty much, if it is launched with the '-update' flag and finds an 
- update file (update.zip, update.zip) it installs it and then launches the main application.
- Hopefuly, this code will not have as many medical side effects as the main application's code.
+ update file (update.zip) it installs it and then launches the main application.
 
  */
 
