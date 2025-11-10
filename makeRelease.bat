@@ -23,7 +23,7 @@ cd ..\..\..\
 cls
 echo Building Windows release...
 dotnet publish --self-contained true -p:PublishSingleFile=false -p:IncludeNativeLibrariesForSelfExtract=true  -p:Configuration=Release -p:PublishReadyToRun=true -p:PublishDir="Release\windows\"
-move Release\bootstrap\windows\* Release\windows\
+move Release\bootstrap\windows\* Release\windows\ 
 powershell Compress-Archive Release\windows\* windows.zip -Force
 
 cls
@@ -43,6 +43,6 @@ cd ..\..\..\
 cls
 echo Building Linux release...
 dotnet publish --self-contained true -p:PublishSingleFile=false -p:IncludeNativeLibrariesForSelfExtract=true  -p:Configuration=Release --os linux -p:PublishDir="Release\linux\"
-move Release\bootstrap\linux\* Release\linux\
+move Release\bootstrap\linux\* Release\linux\ 
 powershell Compress-Archive Release\linux\* linux.zip -Force
 pause

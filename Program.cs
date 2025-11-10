@@ -51,7 +51,7 @@ public class Program
         if (!File.Exists("mods.json")) File.WriteAllText("mods.json", "[]"); // If the mod file doesn't exist, create an empty one to prevent errors.
         pruneMods();
         interaction = true;
-        if (args.Length > 0 && args[0] != "-noupdate")
+        if (!args.Contains<string>("-noupdate"))
             await updater();
         while (true)
         {
@@ -91,10 +91,26 @@ What is your selection?: ");
 
     static async Task LinuxPrefix()
     {
+
         if (!File.Exists("prefix`d"))
         {
-            var detectWine = Process.Start(new ProcessStartInfo { FileName = "dpkg", Arguments = "-s wine64", RedirectStandardError = true, RedirectStandardOutput = true });
-            detectWine.WaitForExit();
+            
+            //Process detectWine = null;
+            //bool sos = false;
+          //  Console.Write("Are you using SteamOS or Arch Linux?\ny/n: ");
+          //  string input = Console.ReadLine();
+          //  if (input.ToUpper() == "Y") sos = true;
+           // if (sos) {
+                //detectWine = Process.Start(new ProcessStartInfo { FileName = "pacman", Arguments = "-Q wine", RedirectStandardError = true, RedirectStandardOutput = true }); 
+            string homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            string prefix = Path.Combine(homeDir, ".local/share/Steam/steamapps/compatdata/945360/pfx");
+            Process.Start(new ProcessStartInfo { FileName = "/bin/bash", Arguments = $"-c \"WINEPREFIX={prefix} {Path.Combine(homeDir, ".local/share/Steam/steamapps/common/Proton\\ 9.0\\ \\(Beta\\)/files/bin/wine64")} reg add HKCU\\\\Software\\\\Wine\\\\DllOverrides /v winhttp /d native,builtin /f\"", UseShellExecute = true }).WaitForExit();
+            File.Create("prefix`d");
+
+          //  }
+            //else detectWine = Process.Start(new ProcessStartInfo { FileName = "dpkg", Arguments = "-s wine64", RedirectStandardError = true, RedirectStandardOutput = true });
+
+           /* detectWine.WaitForExit();
             if (detectWine.ExitCode == 0)
             {
                 // This whole thing makes it so the mods actually appear inside Among Us.
@@ -108,10 +124,14 @@ What is your selection?: ");
             }
             else
             {
+                Process installWine = null;
                 Console.Write("Wine is required to run this program and is not installed on your system.\nInstall now? (y/N): ");
                 if (Console.ReadLine().ToLower().StartsWith("y"))
                 {
-                    var installWine = Process.Start(new ProcessStartInfo { FileName = "sudo", Arguments = "apt install wine64 -y" });
+                    if (sos) {installWine = Process.Start(new ProcessStartInfo { FileName = "sudo", Arguments = "pacman -S wine --noconfirm" }); }
+                    
+                    else { installWine = Process.Start(new ProcessStartInfo { FileName = "sudo", Arguments = "apt install wine64 -y" }); }
+
                     installWine.WaitForExit();
                     if (installWine.ExitCode == 0)
                     {
@@ -128,7 +148,7 @@ What is your selection?: ");
                     Thread.Sleep(2500);
                     Environment.Exit(0);
                 }
-            }
+            }*/
         }
         
     }

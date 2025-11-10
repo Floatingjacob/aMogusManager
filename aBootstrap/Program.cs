@@ -11,11 +11,12 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Threading.Tasks;
 
 Directory.SetCurrentDirectory(AppContext.BaseDirectory);
 
-if (args.Length > 0 && args[0] == "-update") // Ooh...Fancy...
+if (args.Contains<string>("-update")) // Ooh...Fancy...
 {
     await Task.Delay(1000);
     if (File.Exists("update.zip"))
@@ -44,8 +45,6 @@ if (args.Length > 0 && args[0] == "-update") // Ooh...Fancy...
 if (OperatingSystem.IsWindows())
     Process.Start(new ProcessStartInfo { UseShellExecute = true, FileName = "mainApplication.exe" });
 else if (OperatingSystem.IsLinux())
-   // Process.Start(new ProcessStartInfo { UseShellExecute = true, FileName = "mainApplication" }); // This doesn't want to work for some reason.
-   
+    // Process.Start(new ProcessStartInfo { UseShellExecute = true, FileName = "mainApplication" }); // This doesn't want to work for some reason.
     Process.Start(new ProcessStartInfo { UseShellExecute = true, FileName = "x-terminal-emulator", Arguments = "-e ./mainApplication" });
-
 Environment.Exit(0);
