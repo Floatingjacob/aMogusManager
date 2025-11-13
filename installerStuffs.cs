@@ -116,17 +116,7 @@ namespace c_
                 }
             }
 
-            ZipFile.ExtractToDirectory(zipMod, "tmp", true);
-            foreach (string dir in Directory.GetDirectories("tmp"))
-            {
-                foreach (string f in Directory.GetFiles(dir, "*", SearchOption.AllDirectories))
-                {
-                    string relPath = f.Substring(dir.Length).TrimStart(Path.DirectorySeparatorChar);
-                    string dest = Path.Combine($"./instances/{instanceName}", relPath);
-                    Directory.CreateDirectory(Path.GetDirectoryName(dest) ?? "");
-                    File.Copy(f, dest, true);
-                }
-            }
+            ZipFile.ExtractToDirectory(zipMod, $"./instances/{instanceName}", true);
             // Adds a new instance entry *so you know it's installed*
             JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
             mods.Add(new JObject(
@@ -134,7 +124,7 @@ namespace c_
                 new JProperty("installDir", $"./instances/{instanceName}")
             ));
             File.WriteAllText("mods.json", mods.ToString());
-            Directory.Delete("tmp", true);
+           // Directory.Delete("tmp", true);
 
         }
     }
