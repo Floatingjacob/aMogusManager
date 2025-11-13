@@ -16,8 +16,6 @@ using System.Threading.Tasks;
 
 Directory.SetCurrentDirectory(AppContext.BaseDirectory);
 
-if (args.Contains<string>("-update")) // Ooh...Fancy...
-{
     await Task.Delay(1000);
     if (File.Exists("update.zip"))
     {
@@ -25,11 +23,11 @@ if (args.Contains<string>("-update")) // Ooh...Fancy...
         {
             foreach (ZipArchiveEntry file in update.Entries)
             {
-                if (string.Equals(file.Name, "aMogusManager.exe", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(file.Name, "updater.exe", StringComparison.OrdinalIgnoreCase))
                     continue;
-                if (string.Equals(file.Name, "aMogusManager.pdb", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(file.Name, "updater.pdb", StringComparison.OrdinalIgnoreCase))
                     continue;
-                if (string.Equals(file.Name, "aMogusManager", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(file.Name, "updater", StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 string dest = Path.GetFullPath(Path.Combine(".", file.FullName));
@@ -40,11 +38,10 @@ if (args.Contains<string>("-update")) // Ooh...Fancy...
         }
         File.Delete("update.zip");
     }
-}
 
 if (OperatingSystem.IsWindows())
-    Process.Start(new ProcessStartInfo { UseShellExecute = true, FileName = "mainApplication.exe" });
+    Process.Start(new ProcessStartInfo { UseShellExecute = true, FileName = "aMogusManager.exe" });
 else if (OperatingSystem.IsLinux())
     // Process.Start(new ProcessStartInfo { UseShellExecute = true, FileName = "mainApplication" }); // This doesn't want to work for some reason.
-    Process.Start(new ProcessStartInfo { UseShellExecute = true, FileName = "x-terminal-emulator", Arguments = "-e ./mainApplication" });
+    Process.Start(new ProcessStartInfo { UseShellExecute = true, FileName = "xterm", Arguments = "-e ./aMogusManager" });
 Environment.Exit(0);

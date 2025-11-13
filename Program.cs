@@ -314,18 +314,19 @@ What is your selection?: ");
         if (latestVersion > currentVersion)
         {
             Console.WriteLine($"There are updates avalible ({currentVersion} ==> {latestVersion}).");
+
             if (OperatingSystem.IsLinux())
             {
                 // Fancy downloader
                 await downloader.Download($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/linux.zip", "update.zip");
-                Process.Start(new ProcessStartInfo { FileName = "aMogusManager", Arguments = "-update", UseShellExecute = true });
+                Process.Start(new ProcessStartInfo { FileName = "updater", UseShellExecute = true });
                 Environment.Exit(0);
             }
             else if (OperatingSystem.IsWindows())
             {
                 // Fancy downloader
                 await downloader.Download($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/windows.zip", "update.zip");
-                Process.Start(new ProcessStartInfo { FileName = "aMogusManager.exe", Arguments = "-update", UseShellExecute = true });
+                Process.Start(new ProcessStartInfo { FileName = "updater.exe", UseShellExecute = true });
                 Environment.Exit(0);
             }
         }

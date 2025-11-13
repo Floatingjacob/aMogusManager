@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-	<AssemblyName>mainApplication</AssemblyName>
+	<AssemblyName>aMogusManager</AssemblyName>
     <TargetFramework>net9.0</TargetFramework>
     <RootNamespace>c_</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>

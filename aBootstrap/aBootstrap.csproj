@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>winexe</OutputType>
-    <AssemblyName>aMogusManager</AssemblyName>
+    <AssemblyName>updater</AssemblyName>
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
