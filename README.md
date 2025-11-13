@@ -19,6 +19,23 @@ So… I made my own. I'm calling it **aMogusManager** because it it yet another 
 
 ---
 
+## Prerequisites
+
+  Linux
+  - Proton 9.0 (Beta)
+  - Debian-based linux distro (arch linux is untested)
+  - Among Us owned on Steam
+  - Steam
+
+  Windows
+  - Among Us owned on Steam
+  - Steam
+
+
+## Notes
+
+  I would add a quickstart guide, but I'm lazy. If someone bugs me to do it, I'll make one.
+
 ## License 📜
 
 This project is under the **GNU General Public License v3.0 (GPL-3.0)**. Translation for inspecifically specifically **YOU** :
