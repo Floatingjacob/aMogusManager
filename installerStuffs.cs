@@ -8,7 +8,7 @@
 using Newtonsoft.Json.Linq;
 using System.IO.Compression;
 
-namespace c_
+namespace aMogusManager
 {
     public class installerStuffs // The part that has the part that installs things
     {
@@ -55,7 +55,7 @@ namespace c_
         {
             // works kinda like installMod() but it doesn't create a new instance. instead, it just slaps some files onto an existing instance
             Console.Clear();
-            Console.Write("Enter the path to the plugin's .zip file: ");
+            Console.Write("Enter the path to the plugin's .zip file or folder: ");
             bool instanceFound = false;
             plugin = Console.ReadLine().Trim().Trim('"').Trim('\'');
 
@@ -76,14 +76,54 @@ namespace c_
                     if (choice >= 1 && choice <= mods.Count)
                     {
                         JObject selectedMod = (JObject)mods[choice - 1];
+                        string dest = selectedMod["installDir"].ToString();
                         instanceFound = true;
-                        ZipFile.ExtractToDirectory(plugin, selectedMod["installDir"].ToString(), true);
+                        string root = plugin;
+                        if (File.Exists(plugin))
+                        {
+                            string tmpf = "./tmp";
+                            Directory.CreateDirectory(tmpf);
+                            ZipFile.ExtractToDirectory(plugin, tmpf, true);
+                            root = tmpf;
+                            while (true)
+                            {
+                                var dirs = Directory.GetDirectories(root);
+                                var files = Directory.GetFiles(root);
+                                if (files.Length == 0 && dirs.Length == 1)
+                                    root = dirs[0];
+                                else break;
+                            }
+                        }
+                        else if (!Directory.Exists(plugin))
+                        {
+                            Console.WriteLine("Invalid path.");
+                            return;
+                        }
+                        while (true)
+                        {
+                            var dirs = Directory.GetDirectories(root);
+                            var files = Directory.GetFiles(root);
+                            if (files.Length == 0 && dirs.Length == 1)
+                                root = dirs[0];
+                            else break;
+                        }
+                        foreach (var file in Directory.GetFiles(root, "*", SearchOption.AllDirectories))
+                        {
+                            string rel = file.Substring(root.Length).TrimStart(Path.DirectorySeparatorChar);
+                            string target = Path.Combine(dest, rel);
+                            Directory.CreateDirectory(Path.GetDirectoryName(target));
+                            File.Copy(file, target, true);
+                        }
+                        if (Directory.Exists("./tmp"))
+                            Directory.Delete("./tmp", true);
+
                         Console.WriteLine("Plugin installed successfully.");
                         return;
                     }
                 }
             }
         }
+
 
         public static async Task installMod()
         {
@@ -93,14 +133,17 @@ namespace c_
             Console.Write("What do you want to name this instance?: ");
             instanceName = Console.ReadLine();
 
-            Console.Write("Enter the path to the mod's .zip file: ");
+            Console.Write("Enter the path to the mod's .zip file or folder: ");
             zipMod = Console.ReadLine()?.Trim().Trim('"').Trim('\'');
             if (string.IsNullOrWhiteSpace(zipMod)) return;
+
             JArray versions = JArray.Parse(File.ReadAllText("versions.json"));
             while (!versionFound)
             {
                 Console.Clear();
-                foreach (JObject version in versions) Console.WriteLine(version["version"]);
+                foreach (JObject version in versions)
+                    Console.WriteLine(version["version"]);
+
                 Console.Write("What version of Among Us does this mod run on?: ");
                 string input = Console.ReadLine();
 
@@ -116,16 +159,52 @@ namespace c_
                 }
             }
 
-            ZipFile.ExtractToDirectory(zipMod, $"./instances/{instanceName}", true);
-            // Adds a new instance entry *so you know it's installed*
-            JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
-            mods.Add(new JObject(
-                new JProperty("name", instanceName),
-                new JProperty("installDir", $"./instances/{instanceName}")
-            ));
-            File.WriteAllText("mods.json", mods.ToString());
-           // Directory.Delete("tmp", true);
+            string instancePath = $"./instances/{instanceName}";
+            string root = zipMod;
 
+            if (File.Exists(zipMod))
+            {
+                string tmpf = $"./tmp_{instanceName}";
+                Directory.CreateDirectory(tmpf);
+                ZipFile.ExtractToDirectory(zipMod, tmpf, true);
+                root = tmpf;
+                while (true)
+                {
+                    var dirs = Directory.GetDirectories(root);
+                    var files = Directory.GetFiles(root);
+                    if (files.Length == 0 && dirs.Length == 1)
+                        root = dirs[0];
+                    else break;
+                }
+            }
+            else if (!Directory.Exists(zipMod))
+            {
+                Console.WriteLine("Invalid path.");
+                return;
+            }
+            while (true)
+            {
+                var dirs = Directory.GetDirectories(root);
+                var files = Directory.GetFiles(root);
+                if (files.Length == 0 && dirs.Length == 1)
+                    root = dirs[0];
+                else break;
+            }
+            foreach (var file in Directory.GetFiles(root, "*", SearchOption.AllDirectories))
+            {
+                string rel = file.Substring(root.Length).TrimStart(Path.DirectorySeparatorChar);
+                string target = Path.Combine(instancePath, rel);
+                Directory.CreateDirectory(Path.GetDirectoryName(target));
+                File.Copy(file, target, true);
+            }
+            if (Directory.Exists($"./tmp_{instanceName}"))
+                Directory.Delete($"./tmp_{instanceName}", true);
+            JArray modsArr = JArray.Parse(File.ReadAllText("mods.json"));
+            modsArr.Add(new JObject(
+                new JProperty("name", instanceName),
+                new JProperty("installDir", instancePath)
+            ));
+            File.WriteAllText("mods.json", modsArr.ToString());
         }
     }
 }

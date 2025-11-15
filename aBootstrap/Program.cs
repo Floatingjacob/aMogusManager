@@ -1,47 +1,41 @@
 ﻿/*
   
- This is the bootstrap for 'aMogusmanager'.
- Pretty much, if it is launched with the '-update' flag and finds an 
- update file (update.zip) it installs it and then launches the main application.
+  This is the auto-update installer for the main aMogusManager program. 
 
  */
-
 
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Threading.Tasks;
 
 Directory.SetCurrentDirectory(AppContext.BaseDirectory);
 
-    await Task.Delay(1000);
+    int pid = int.Parse(Environment.GetCommandLineArgs()[1]);
+
+    while (true)
+    {
+        try { Process.GetProcessById(pid); }
+        catch { break; }
+        await Task.Delay(200);
+    }
+
     if (File.Exists("update.zip"))
     {
-        using (ZipArchive update = ZipFile.OpenRead("update.zip"))
+        using var zip = ZipFile.OpenRead("update.zip");
+        foreach (var entry in zip.Entries)
         {
-            foreach (ZipArchiveEntry file in update.Entries)
-            {
-                if (string.Equals(file.Name, "updater.exe", StringComparison.OrdinalIgnoreCase))
-                    continue;
-                if (string.Equals(file.Name, "updater.pdb", StringComparison.OrdinalIgnoreCase))
-                    continue;
-                if (string.Equals(file.Name, "updater", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                string dest = Path.GetFullPath(Path.Combine(".", file.FullName));
-                Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
-                if (!string.IsNullOrEmpty(file.Name))
-                    file.ExtractToFile(dest, overwrite: true);
-            }
+            if (entry.Name.StartsWith("updater")) continue;
+            string dest = Path.GetFullPath(entry.FullName);
+            Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
+            if (!string.IsNullOrEmpty(entry.Name))
+                entry.ExtractToFile(dest, true);
         }
         File.Delete("update.zip");
     }
 
-if (OperatingSystem.IsWindows())
-    Process.Start(new ProcessStartInfo { UseShellExecute = true, FileName = "aMogusManager.exe" });
-else if (OperatingSystem.IsLinux())
-    // Process.Start(new ProcessStartInfo { UseShellExecute = true, FileName = "mainApplication" }); // This doesn't want to work for some reason.
-    Process.Start(new ProcessStartInfo { UseShellExecute = true, FileName = "xterm", Arguments = "-e ./aMogusManager" });
+    if (OperatingSystem.IsWindows()) Process.Start("aMogusManager.exe");
+    if (OperatingSystem.IsLinux()) Process.Start("xterm", "-e ./aMogusManager");
+
 Environment.Exit(0);
