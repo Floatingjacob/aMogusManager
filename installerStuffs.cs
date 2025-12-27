@@ -1,7 +1,7 @@
 ﻿/*
  
  This file contains most of the stuff relating to installing instances of Among Us.
- This file was created by FloatingJacob (who else, besides Meta, could've done it so messily?)
+ This file was created by FloatingJacob for use with aMogusManager.
  
  */
 
@@ -10,38 +10,39 @@ using System.IO.Compression;
 
 namespace aMogusManager
 {
-    public class installerStuffs // The part that has the part that installs things
+    public class installerStuffs
     {
         public static string selectedVersion;
         static string plugin;
         static string zipMod;
 
-        public static async Task installVanilla()
+        public static async Task installVanilla(string instanceName, string gameVersion)
         {
             bool versionFound = false;
-            string instanceName;
             JArray versions = JArray.Parse(File.ReadAllText("versions.json"));
-            Console.Write("What do you want to name this instance?: ");
-            instanceName = Console.ReadLine();
-            if (string.IsNullOrWhiteSpace(instanceName)) return;
+
             while (!versionFound)
             {
-                Console.Clear();
-                foreach (JObject version in versions) Console.WriteLine(version["version"]);
-                Console.Write("What version of Among Us do you want to install?: ");
-                string input = Console.ReadLine();
 
                 foreach (JObject version in versions)
                 {
-                    if (input == version["version"].ToString())
+                    if (gameVersion == version["version"].ToString())
                     {
                         versionFound = true;
-                        selectedVersion = input;
+                        selectedVersion = gameVersion;
                         await Program.DownloadInstance(version["manifestID"].ToString(), false, selectedVersion, instanceName);
 
                         JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
-                        mods.Add(new JObject( // Creates a new mod entry
+                        int highest = 0;
+                        int current = 0;
+                        foreach (JObject modID in mods)
+                        {
+                            int.TryParse(modID["modID"].ToString(), out current);
+                            if (current > highest) highest = current;
+                        }
+                        mods.Add(new JObject(
                             new JProperty("name", instanceName),
+                            new JProperty("modID", highest + 1),
                             new JProperty("installDir", $"./instances/{instanceName}")
                         ));
                         File.WriteAllText("mods.json", mods.ToString());
@@ -51,54 +52,35 @@ namespace aMogusManager
             }
         }
 
-        public static async Task installPlugin()
+        public static async Task installPlugin(string modID, string zipMod)
         {
             // works kinda like installMod() but it doesn't create a new instance. instead, it just slaps some files onto an existing instance
-            Console.Clear();
-            Console.Write("Enter the path to the plugin's .zip file or folder: ");
             bool instanceFound = false;
-            plugin = Console.ReadLine().Trim().Trim('"').Trim('\'');
-
-            if (string.IsNullOrWhiteSpace(plugin)) return;
+            plugin = zipMod.Trim().Trim('"').Trim('\'');
+            int pos = -1;
 
             while (!instanceFound)
             {
-                Console.Clear();
+                pos++;
+                JObject selectedMod = null;
                 JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
 
-                for (int id = 0; id < mods.Count; id++)
+                if (mods[pos]["modID"].ToString() == modID.ToString())
                 {
-                    Console.WriteLine($"{id + 1}. {mods[id]["name"]}");
+                    instanceFound = true;
+                    selectedMod = (JObject)mods[pos];
                 }
-                Console.Write("\nWhat instance do you want to install this plugin to?: ");
-                if (int.TryParse(Console.ReadLine(), out int choice))
                 {
-                    if (choice >= 1 && choice <= mods.Count)
+
+                    string dest = selectedMod["installDir"].ToString();
+                    instanceFound = true;
+                    string root = plugin;
+                    if (File.Exists(plugin))
                     {
-                        JObject selectedMod = (JObject)mods[choice - 1];
-                        string dest = selectedMod["installDir"].ToString();
-                        instanceFound = true;
-                        string root = plugin;
-                        if (File.Exists(plugin))
-                        {
-                            string tmpf = "./tmp";
-                            Directory.CreateDirectory(tmpf);
-                            ZipFile.ExtractToDirectory(plugin, tmpf, true);
-                            root = tmpf;
-                            while (true)
-                            {
-                                var dirs = Directory.GetDirectories(root);
-                                var files = Directory.GetFiles(root);
-                                if (files.Length == 0 && dirs.Length == 1)
-                                    root = dirs[0];
-                                else break;
-                            }
-                        }
-                        else if (!Directory.Exists(plugin))
-                        {
-                            Console.WriteLine("Invalid path.");
-                            return;
-                        }
+                        string tmpf = "./tmp";
+                        Directory.CreateDirectory(tmpf);
+                        ZipFile.ExtractToDirectory(plugin, tmpf, true);
+                        root = tmpf;
                         while (true)
                         {
                             var dirs = Directory.GetDirectories(root);
@@ -107,51 +89,54 @@ namespace aMogusManager
                                 root = dirs[0];
                             else break;
                         }
-                        foreach (var file in Directory.GetFiles(root, "*", SearchOption.AllDirectories))
-                        {
-                            string rel = file.Substring(root.Length).TrimStart(Path.DirectorySeparatorChar);
-                            string target = Path.Combine(dest, rel);
-                            Directory.CreateDirectory(Path.GetDirectoryName(target));
-                            File.Copy(file, target, true);
-                        }
-                        if (Directory.Exists("./tmp"))
-                            Directory.Delete("./tmp", true);
-
-                        Console.WriteLine("Plugin installed successfully.");
+                    }
+                    else if (!Directory.Exists(plugin))
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("[ERROR] Invalid path.");
+                        Console.ForegroundColor = ConsoleColor.White;
                         return;
                     }
+                    while (true)
+                    {
+                        var dirs = Directory.GetDirectories(root);
+                        var files = Directory.GetFiles(root);
+                        if (files.Length == 0 && dirs.Length == 1)
+                            root = dirs[0];
+                        else break;
+                    }
+                    foreach (var file in Directory.GetFiles(root, "*", SearchOption.AllDirectories))
+                    {
+                        string rel = file.Substring(root.Length).TrimStart(Path.DirectorySeparatorChar);
+                        string target = Path.Combine(dest, rel);
+                        Directory.CreateDirectory(Path.GetDirectoryName(target));
+                        File.Copy(file, target, true);
+                    }
+                    if (Directory.Exists("./tmp"))
+                        Directory.Delete("./tmp", true);
+
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("[Info] Plugin installed successfully.");
+                    Console.ForegroundColor= ConsoleColor.White;
+                    return;
                 }
             }
         }
 
-
-        public static async Task installMod()
+        public static async Task installMod(string modFile, string instanceName, string gameVersion)
         {
             bool versionFound = false;
-            string instanceName;
-
-            Console.Write("What do you want to name this instance?: ");
-            instanceName = Console.ReadLine();
-
-            Console.Write("Enter the path to the mod's .zip file or folder: ");
-            zipMod = Console.ReadLine()?.Trim().Trim('"').Trim('\'');
-            if (string.IsNullOrWhiteSpace(zipMod)) return;
+            zipMod = modFile;
 
             JArray versions = JArray.Parse(File.ReadAllText("versions.json"));
             while (!versionFound)
             {
-                Console.Clear();
-                foreach (JObject version in versions)
-                    Console.WriteLine(version["version"]);
-
-                Console.Write("What version of Among Us does this mod run on?: ");
-                string input = Console.ReadLine();
 
                 foreach (JObject version in versions)
                 {
-                    if (input == version["version"].ToString())
+                    if (gameVersion == version["version"].ToString())
                     {
-                        selectedVersion = input;
+                        selectedVersion = gameVersion;
                         versionFound = true;
                         await Program.DownloadInstance(version["manifestID"].ToString(), true, selectedVersion, instanceName);
                         break;
@@ -179,7 +164,9 @@ namespace aMogusManager
             }
             else if (!Directory.Exists(zipMod))
             {
-                Console.WriteLine("Invalid path.");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("[ERROR] Invalid path.");
+                Console.ForegroundColor= ConsoleColor.White;
                 return;
             }
             while (true)
@@ -200,11 +187,20 @@ namespace aMogusManager
             if (Directory.Exists($"./tmp_{instanceName}"))
                 Directory.Delete($"./tmp_{instanceName}", true);
             JArray modsArr = JArray.Parse(File.ReadAllText("mods.json"));
+            int highest = -1;
+            int current = -1;
+            foreach (JObject modID in modsArr)
+            {
+                int.TryParse(modID["modID"].ToString(), out current);
+                if (current > highest) highest = current;
+            }
             modsArr.Add(new JObject(
                 new JProperty("name", instanceName),
+                new JProperty("modID", highest + 1),
                 new JProperty("installDir", instancePath)
             ));
             File.WriteAllText("mods.json", modsArr.ToString());
         }
     }
+
 }

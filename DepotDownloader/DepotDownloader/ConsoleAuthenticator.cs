@@ -11,7 +11,7 @@ namespace DepotDownloader
     internal class ConsoleAuthenticator : IAuthenticator
     {
         /// <inheritdoc />
-        public Task<string> GetDeviceCodeAsync(bool previousCodeWasIncorrect)
+        public async Task<string> GetDeviceCodeAsync(bool previousCodeWasIncorrect)
         {
             if (previousCodeWasIncorrect)
             {
@@ -24,7 +24,7 @@ namespace DepotDownloader
             {
                 Console.Error.Write("STEAM GUARD! Please enter your 2-factor auth code from your authenticator app: ");
                 code = Console.ReadLine()?.Trim();
-
+                
                 if (code == null)
                 {
                     break;

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>aMogusManager</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root {
+  --bg: #0f1116;
+  --panel: #171a21;
+  --accent: #ff4d4d;
+  --text: #e6e6e6;
+  --muted: #9aa0a6;
+  --border: #2a2f3a;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #151922, var(--bg));
+  color: var(--text);
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 280px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo {
+  font-size: 1.6em;
+  font-weight: 800;
+  margin-bottom: 20px;
+  color: var(--accent);
+}
+
+button {
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button.secondary {
+  background: #2a2f3a;
+}
+
+button:hover {
+  filter: brightness(1.1);
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+select {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Main */
+.main {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.instances {
+  flex: 1;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow-y: auto;
+}
+
+.instance {
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.instance:last-child {
+  border-bottom: none;
+}
+
+.instance.selected {
+  background: #1f2430;
+}
+
+.instance-name {
+  font-weight: 700;
+}
+
+.instance-type {
+  font-size: 0.85em;
+  color: var(--muted);
+}
+
+.footer {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 0.8em;
+  text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="logo">aMogusManager</div>
+
+  <label for="versionSelect" style="margin-bottom: 8px; display:block; color: var(--muted);">Select Version:</label>
+  <select id="versionSelect" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 12px; background: var(--panel); color: var(--text);">
+    <option>Loading...</option>
+  </select>
+
+  <button onclick="addModded()">➕ Add Mod Instance</button>
+  <button onclick="addVanilla()">➕ Add Vanilla Instance</button>
+  <button class="secondary" onclick="removeInstance()">🗑 Remove Instance</button>
+
+  <hr style="border-color: var(--border); margin: 14px 0;">
+
+  <button onclick="installPlugin()">🧩 Install Plugin</button>
+  <button onclick="changePath()">📁 Change Among Us Steam Path</button>
+</div>
+
+<div class="main">
+  <div class="header">
+    <h1>Instances</h1>
+    <button onclick="runInstance()">▶ Run Selected</button>
+  </div>
+
+  <div class="instances" id="instanceList"></div>
+
+  <div class="footer">
+    Frontend made by ChatGPT cus i suck at html and javascript
+  </div>
+</div>
+
+<script>
+let instances = [];
+let selectedIndex = null;
+let versions = [];
+
+function render() {
+  const list = document.getElementById("instanceList");
+  list.innerHTML = "";
+
+  instances.forEach((inst, i) => {
+    const div = document.createElement("div");
+    div.className = "instance" + (i === selectedIndex ? " selected" : "");
+    div.onclick = () => {
+      selectedIndex = i;
+      render();
+    };
+
+    div.innerHTML = `
+      <div>
+        <div class="instance-name">${inst.name}</div>
+        <div class="instance-type">
+          ID ${inst.modID} • ${inst.installDir}
+        </div>
+      </div>
+      <button onclick="event.stopPropagation(); runInstance(${i})">▶</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+async function loadFromBackend() {
+  try {
+    const res = await fetch("http://127.0.0.1:6741/mods");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+
+    const data = await res.json();
+
+    instances = data.map(m => ({
+      name: m.name,
+      modID: m.modID,
+      installDir: m.installDir
+    }));
+
+    render();
+    console.log("Loaded mods:", instances);
+  } catch (err) {
+    console.error("Failed to load mods:", err);
+  }
+}
+
+async function loadVersions() {
+  try {
+    const res = await fetch("http://127.0.0.1:6741/versions");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+
+    versions = await res.json();
+    const select = document.getElementById("versionSelect");
+    select.innerHTML = "";
+    
+    versions.forEach(v => {
+      const option = document.createElement("option");
+      option.value = v.manifestID;
+      option.textContent = v.version;
+      select.appendChild(option);
+    });
+
+    if (versions.length > 0) {
+      select.selectedIndex = 0;
+    } else {
+      select.innerHTML = '<option>No versions available</option>';
+    }
+
+  } catch (err) {
+    console.error("Failed to fetch versions:", err);
+    const select = document.getElementById("versionSelect");
+    select.innerHTML = '<option>Error loading versions</option>';
+  }
+}
+
+async function addVanilla() {
+  alert("The console may require interaction while using this feature");
+  const select = document.getElementById("versionSelect");
+  const version = select.options[select.selectedIndex].text;
+
+  if (!version) return alert("No version selected");
+
+  const name = prompt("Enter a name for the Vanilla instance:", "Vanilla " + version);
+  if (!name) return alert("Instance name required");
+
+  try {
+    await fetch(`http://127.0.0.1:6741/installVanilla?version=${encodeURIComponent(version)}&name=${encodeURIComponent(name)}`);
+    loadFromBackend();
+  } catch (err) {
+    console.error("Failed to install Vanilla:", err);
+    alert("Failed to install Vanilla.");
+  }
+}
+
+async function addModded() {
+  alert("The console may require interaction while using this feature");
+  const select = document.getElementById("versionSelect");
+  if (!select) return;
+  const version = select.options[select.selectedIndex].text;
+  if (!version) return alert("No version selected");
+
+  const name = prompt("Enter a name for the Modded instance:", "Modded " + version);
+  if (!name) return alert("Instance name required");
+
+  const zipPath = prompt("Enter the full path to your ZIP file:");
+  if (!zipPath) return alert("No file path provided");
+
+  try {
+    const url = `http://127.0.0.1:6741/installModded?version=${encodeURIComponent(version)}&name=${encodeURIComponent(name)}&zipMod=${encodeURIComponent(zipPath)}`;
+
+    const res = await fetch(url, { method: "GET" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    alert("Modded instance installed successfully!");
+    loadFromBackend();
+  } catch (err) {
+    console.error("Failed to install Modded:", err);
+    alert("Failed to install Modded.");
+  }
+}
+
+
+
+function removeInstance(index = selectedIndex) {
+  if (selectedIndex === null) return alert("No instance selected");
+  fetch("http://127.0.0.1:6741/removeMod?modID=" + instances[index].modID);
+  loadFromBackend();
+}
+
+function runInstance(index = selectedIndex) {
+  if (index == null) return alert("No instance selected");
+  fetch("http://127.0.0.1:6741/runMod?modID=" + instances[index].modID);
+  alert("Launching " + instances[index].name);
+}
+
+async function installPlugin() {
+  if (selectedIndex === null) return alert("No instance selected");
+
+  const instance = instances[selectedIndex];
+
+  const zipPath = prompt(`Enter the full path to the plugin ZIP for "${instance.name}":`);
+  if (!zipPath) return alert("No file path provided");
+
+  try {
+    const url = `http://127.0.0.1:6741/installPlugin?modID=${instance.modID}&zipPlugin=${encodeURIComponent(zipPath)}`;
+    const res = await fetch(url, { method: "GET" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    alert(`Plugin installed on "${instance.name}" successfully!`);
+    loadFromBackend();
+  } catch (err) {
+    console.error("Failed to install plugin:", err);
+    alert("Failed to install plugin.");
+  }
+}
+
+
+async function changePath() {
+
+  const newPath = prompt("Enter the full path to the Among Us Steam folder:");
+  if (!newPath) return alert("No file path provided");
+    const url = `http://127.0.0.1:6741/changePath?newPath=${encodeURIComponent(newPath)}`;
+    const res = await fetch(url, { method: "GET" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    alert("Steam path changed.");
+}
+
+loadFromBackend();
+loadVersions();
+</script>
+
+</body>
+</html>
