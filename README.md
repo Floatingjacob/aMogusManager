@@ -46,6 +46,10 @@ This project is under the **GNU General Public License v3.0 (GPL-3.0)**. Transla
 
 Full license text here: [GPL-3.0 License](https://www.gnu.org/licenses/gpl-3.0.txt)  
 
+
+## Final Words:
+- This project intentionally prioritizes functionality, meaning the code is messy in places (non-negotiable). 
+
 ---
 
 aMogusManager: for when you want a manager that actually works… unlike that one crewmate who’s always 'venting'. 😏
