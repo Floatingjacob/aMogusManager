@@ -190,13 +190,12 @@ namespace aMogusManager
                 {
                     instanceFound = true;
                     mogusMod = (JObject)mods[pos];
+                    Directory.Delete(mogusMod["installDir"].ToString() ?? "", true);
+                    mogusMod.Remove();
+                    File.WriteAllText("mods.json", mods.ToString());
+                    Console.WriteLine("[Info] Mod uninstalled.");
+                    return;
                 }
-
-                Directory.Delete(mogusMod["installDir"].ToString() ?? "", true);
-                mogusMod.Remove();
-                File.WriteAllText("mods.json", mods.ToString());
-                Console.WriteLine("[Info] Mod uninstalled.");
-                return;
             }
         }
 
