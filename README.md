@@ -11,7 +11,7 @@ So… I made my own. I'm calling it **aMogusManager** because it it yet another 
 
 ## Specs(?) 
 
-- Works on **Windows** and **Linux** (macOS users, get a real computer).  
+- Works on **Windows** ~~and **Linux**~~ (macOS users, get a real computer).  
 - Easyish mod installation.
 - Lets you install 'plugins' like [AUnlocker](https://github.com/astra1dev/AUnlocker)
 - Supports custom Steam Among Us installation paths (`gamefolder.txt`).  
@@ -21,11 +21,15 @@ So… I made my own. I'm calling it **aMogusManager** because it it yet another 
 
 ## Prerequisites
 
-  Linux
-  - Proton 9.0 (Beta)
-  - Debian-based linux distro (arch linux is untested)
-  - Among Us owned on Steam
-  - Steam
+  ~~Linux~~
+  
+ ~~- Proton 9.0 (Beta)~~
+ 
+ ~~- Debian-based linux distro (arch linux is untested)~~
+ 
+ ~~- Among Us owned on Steam~~
+ 
+ ~~- Steam~~
 
   Windows
   - Among Us owned on Steam
