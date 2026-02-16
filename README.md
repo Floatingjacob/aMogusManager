@@ -42,13 +42,9 @@ So… I made my own. I'm calling it **aMogusManager** because it it yet another 
 
 ## License 📜
 
-This project is under the **GNU General Public License v3.0 (GPL-3.0)**. Translation for inspecifically specifically **YOU** :
+This project is licensed under **CC BY-NC-SA 4.0**. 
 
-- ❌ You **cannot sell** this software without following the rules.  
-- 👤 You **must give original credit to me** if you modify it.  
-- 🔄 Any derivative work must also use the **GPL-3.0 license**.  
-
-Full license text here: [GPL-3.0 License](https://www.gnu.org/licenses/gpl-3.0.txt)  
+Full license text here: [CC BY-NC-SA 4.0 License](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode.txt)  
 
 
 ## Final Words:
