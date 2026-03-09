@@ -3,10 +3,7 @@
  This file is the UI backend.
  This file was created by FloatingJacob for use with aMogusManager.
  
- */
-using Newtonsoft.Json;
-using System.Net;
-using System.Text;
+*/
 
 namespace aMogusManager
 {
@@ -76,7 +73,7 @@ namespace aMogusManager
                 else
                 {
 
-                    await Program.removeMod(modID);
+                    await instanceStuffs.removeMod(modID);
                     string msg = JsonConvert.SerializeObject("gud", Newtonsoft.Json.Formatting.Indented);
                     SendJson(response, msg);
                     response.Close();
@@ -89,7 +86,7 @@ namespace aMogusManager
                 string name = request.QueryString["name"];
                 string version = request.QueryString["version"];
                 string zipMod = request.QueryString["zipMod"];
-                await installerStuffs.installMod(zipMod, name, version);
+                await instanceStuffs.installMod(zipMod, name, version);
                 string msg = JsonConvert.SerializeObject("gud", Newtonsoft.Json.Formatting.Indented);
                 SendJson(response, msg);
                 response.Close();
@@ -102,7 +99,7 @@ namespace aMogusManager
                 string modID = request.QueryString["modID"];
 
                 string zipPlugin = request.QueryString["zipPlugin"];
-                await installerStuffs.installPlugin(modID, zipPlugin);
+                await instanceStuffs.installPlugin(modID, zipPlugin);
                 string msg = JsonConvert.SerializeObject("gud", Newtonsoft.Json.Formatting.Indented);
                 SendJson(response, msg);
                 response.Close();
@@ -113,7 +110,7 @@ namespace aMogusManager
                 Console.WriteLine($"[GET] {path}");
                 string name = request.QueryString["name"];
                 string version = request.QueryString["version"];
-                await installerStuffs.installVanilla(name, version);
+                await instanceStuffs.installVanilla(name, version);
                 string msg = JsonConvert.SerializeObject("gud", Newtonsoft.Json.Formatting.Indented);
                 SendJson(response, msg);
                 response.Close();

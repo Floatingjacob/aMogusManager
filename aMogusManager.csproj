@@ -51,12 +51,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Remove="C:\Users\jamil\.nuget\packages\mumblesharp\2.0.1\contentFiles\any\netstandard2.1\Audio\Codecs\Opus\Libs\32bit\opus.dll" />
-    <Content Remove="C:\Users\jamil\.nuget\packages\mumblesharp\2.0.1\contentFiles\any\netstandard2.1\Audio\Codecs\Opus\Libs\64bit\opus.dll" />
-    <Content Remove="C:\Users\jamil\.nuget\packages\mumblesharp\2.0.1\contentFiles\any\netstandard2.1\mumblesharp.ico" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="icon.ico" />
   </ItemGroup>
 

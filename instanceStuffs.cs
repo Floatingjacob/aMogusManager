@@ -1,16 +1,13 @@
 ﻿/*
  
- This file contains most of the stuff relating to installing instances of Among Us.
+ This file contains most of the stuff relating to manipulting instances of Among Us.
  This file was created by FloatingJacob for use with aMogusManager.
  
- */
-
-using Newtonsoft.Json.Linq;
-using System.IO.Compression;
+*/
 
 namespace aMogusManager
 {
-    public class installerStuffs
+    public class instanceStuffs
     {
         public static string selectedVersion;
         static string plugin;
@@ -30,7 +27,7 @@ namespace aMogusManager
                     {
                         versionFound = true;
                         selectedVersion = gameVersion;
-                        await Program.DownloadInstance(version["manifestID"].ToString(), false, selectedVersion, instanceName);
+                        await DownloadInstance(version["manifestID"].ToString(), false, selectedVersion, instanceName);
 
                         JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
                         int highest = 0;
@@ -138,7 +135,7 @@ namespace aMogusManager
                     {
                         selectedVersion = gameVersion;
                         versionFound = true;
-                        await Program.DownloadInstance(version["manifestID"].ToString(), true, selectedVersion, instanceName);
+                        await DownloadInstance(version["manifestID"].ToString(), true, selectedVersion, instanceName);
                         break;
                     }
                 }
@@ -201,6 +198,67 @@ namespace aMogusManager
             ));
             File.WriteAllText("mods.json", modsArr.ToString());
         }
+        public static async Task DownloadInstance(string manifestID, bool modded, string selectedVersion, string instanceName)
+        {
+            string cacheDir = $"cache/{selectedVersion}";
+
+            if (Directory.Exists(cacheDir))
+            {
+
+                foreach (var dirPath in Directory.GetDirectories(cacheDir, "*", SearchOption.AllDirectories))
+                {
+                    string relativePath = Path.GetRelativePath(cacheDir, dirPath);
+                    string targetDir = Path.Combine($"instances/{instanceName}", relativePath);
+                    Directory.CreateDirectory(targetDir);
+                }
+
+                foreach (var filePath in Directory.GetFiles(cacheDir, "*", SearchOption.AllDirectories))
+                {
+                    string relativePath = Path.GetRelativePath(cacheDir, filePath);
+                    string targetFile = Path.Combine($"instances/{instanceName}", relativePath);
+                    Directory.CreateDirectory(Path.GetDirectoryName(targetFile) ?? "");
+                    File.Copy(filePath, targetFile, true);
+                }
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Blue;
+                Console.Write("Enter your Steam username: "); // For some reason, DepotDownloader's built-in 'Enter Username' prompt doesn't show up.
+                string input = Console.ReadLine();
+                DepotDownloader.Program.Main(["-app", "945360", "-depot", "945361", "-remember-password", "-manifest", manifestID, "-dir", cacheDir, "-user", input]).Wait();
+                foreach (var filePath in Directory.GetFiles(cacheDir, "*", SearchOption.AllDirectories))
+                {
+                    string relativePath = Path.GetRelativePath(cacheDir, filePath);
+                    string targetFile = Path.Combine($"instances/{instanceName}", relativePath);
+                    Directory.CreateDirectory(Path.GetDirectoryName(targetFile) ?? "");
+                    File.Copy(filePath, targetFile, true);
+                }
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+        }
+        public static async Task removeMod(int modID)
+        {
+            bool instanceFound = false;
+            int pos = -1;
+            JObject mogusMod = null;
+            while (!instanceFound)
+            {
+                JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
+
+                pos++;
+                if (mods[pos]["modID"].ToString() == modID.ToString())
+                {
+                    instanceFound = true;
+                    mogusMod = (JObject)mods[pos];
+                    Directory.Delete(mogusMod["installDir"].ToString() ?? "", true);
+                    mogusMod.Remove();
+                    File.WriteAllText("mods.json", mods.ToString());
+                    Console.WriteLine("[Info] Mod uninstalled.");
+                    return;
+                }
+            }
+        }
+
     }
 
 }

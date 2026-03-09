@@ -6,10 +6,10 @@
  (pretty much, i just made everything in it's Program.cs file public)
 
  This file was created by FloatingJacob for use with aMogusManager.
- */
 
-using Newtonsoft.Json.Linq;
-using System.Diagnostics;
+*/
+
+
 
 #pragma warning disable CS8602 // *ahem*
 #pragma warning disable CS8618
@@ -26,7 +26,7 @@ namespace aMogusManager
         static int FrontendPID;
         public static async Task Main(string[] args)
         {
-            AppDomain.CurrentDomain.ProcessExit += new EventHandler(killFrontend); 
+            AppDomain.CurrentDomain.ProcessExit += new EventHandler(killFrontend);
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("[Warning] Closing this window will cause the frontend to stop working.");
             Console.ForegroundColor = ConsoleColor.White;
@@ -136,69 +136,7 @@ namespace aMogusManager
                 }
             }
         }
-
-        public static async Task DownloadInstance(string manifestID, bool modded, string selectedVersion, string instanceName)
-        {
-            string cacheDir = $"cache/{selectedVersion}";
-
-            if (Directory.Exists(cacheDir))
-            {
-
-                foreach (var dirPath in Directory.GetDirectories(cacheDir, "*", SearchOption.AllDirectories))
-                {
-                    string relativePath = Path.GetRelativePath(cacheDir, dirPath);
-                    string targetDir = Path.Combine($"instances/{instanceName}", relativePath);
-                    Directory.CreateDirectory(targetDir);
-                }
-
-                foreach (var filePath in Directory.GetFiles(cacheDir, "*", SearchOption.AllDirectories))
-                {
-                    string relativePath = Path.GetRelativePath(cacheDir, filePath);
-                    string targetFile = Path.Combine($"instances/{instanceName}", relativePath);
-                    Directory.CreateDirectory(Path.GetDirectoryName(targetFile) ?? "");
-                    File.Copy(filePath, targetFile, true);
-                }
-            }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.Blue;
-                Console.Write("Enter your Steam username: "); // For some reason, DepotDownloader's built-in 'Enter Username' prompt doesn't show up.
-                string input = Console.ReadLine();
-                DepotDownloader.Program.Main(["-app", "945360", "-depot", "945361", "-remember-password", "-manifest", manifestID, "-dir", cacheDir, "-user", input]).Wait();
-                foreach (var filePath in Directory.GetFiles(cacheDir, "*", SearchOption.AllDirectories))
-                {
-                    string relativePath = Path.GetRelativePath(cacheDir, filePath);
-                    string targetFile = Path.Combine($"instances/{instanceName}", relativePath);
-                    Directory.CreateDirectory(Path.GetDirectoryName(targetFile) ?? "");
-                    File.Copy(filePath, targetFile, true);
-                }
-                Console.ForegroundColor = ConsoleColor.White;
-            }
-        }
-
-        public static async Task removeMod(int modID)
-        {
-            bool instanceFound = false;
-            int pos = -1;
-            JObject mogusMod = null;
-            while (!instanceFound)
-            {
-                JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
-
-                pos++;
-                if (mods[pos]["modID"].ToString() == modID.ToString())
-                {
-                    instanceFound = true;
-                    mogusMod = (JObject)mods[pos];
-                    Directory.Delete(mogusMod["installDir"].ToString() ?? "", true);
-                    mogusMod.Remove();
-                    File.WriteAllText("mods.json", mods.ToString());
-                    Console.WriteLine("[Info] Mod uninstalled.");
-                    return;
-                }
-            }
-        }
-
+  
         public static async Task checkUpdates()
         {
             // Sorry about all the messy variables.
