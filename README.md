@@ -3,19 +3,20 @@
 I know there are already a lot of Among Us mod managers out there, **but hear me out**:
 
 
-Most of them: Don't work, are annoying to use, obsolete, sketchier than that Nigerian prince asking for money, or lack the features I need.
+Most of them: Don't work, are annoying to use, obsolete/discontinued (i'm looking at **you**, [ModManager](https://github.com/MatuxGG/ModManager)), sketchier than that Nigerian prince asking for money, or lack the features I need.
 
 So… I made my own. I'm calling it **aMogusManager** because it it yet another Among Us mod manager.
 
 ---
 
-## Specs(?) 
+## Overview 
 
 - Works on **Windows** ~~and **Linux**~~ (macOS users, get a real computer).  
-- Easyish mod installation.
+- Easy mod installation.
+- Seperate instances, and version caching (can save bandwidth)
 - Lets you install 'plugins' like [AUnlocker](https://github.com/astra1dev/AUnlocker)
-- Supports custom Steam Among Us installation paths (`gamefolder.txt`).  
-- Allows you to select a specific version of Among Us to automatically download.  
+- Supports custom Steam Among Us installation paths
+- Allows you to easily downgrade Among Us in order to use older mods.
 
 ---
 
