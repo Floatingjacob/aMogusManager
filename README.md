@@ -37,9 +37,9 @@ So… I made my own. I'm calling it **aMogusManager** because it it yet another 
   - Steam
 
 
-## Notes
+## Quickstart
 
-  I would add a quickstart guide, but I'm lazy. If someone bugs me to do it, I'll make one.
+Follow [this guide](https://github.com/Floatingjacob/aMogusManager/wiki/Quickstart-Guide) to get aMogusManager set up for the first time.
 
 ## License 📜
 
