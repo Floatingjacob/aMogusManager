@@ -21,33 +21,16 @@
 	</PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="aBootstrap\**" />
-    <Compile Remove="aDownloader\**" />
-    <Compile Remove="bootstrap\**" />
     <Compile Remove="DepotDownloader\**" />
     <Compile Remove="frontend\**" />
     <Compile Remove="installer\**" />
-    <Compile Remove="old\**" />
     <Compile Remove="Release\**" />
-    <Compile Remove="test\**" />
-    <EmbeddedResource Remove="aBootstrap\**" />
-    <EmbeddedResource Remove="aDownloader\**" />
-    <EmbeddedResource Remove="bootstrap\**" />
     <EmbeddedResource Remove="DepotDownloader\**" />
     <EmbeddedResource Remove="frontend\**" />
     <EmbeddedResource Remove="installer\**" />
-    <EmbeddedResource Remove="old\**" />
     <EmbeddedResource Remove="Release\**" />
-    <EmbeddedResource Remove="test\**" />
-    <None Remove="aBootstrap\**" />
-    <None Remove="aDownloader\**" />
-    <None Remove="bootstrap\**" />
-    <None Remove="DepotDownloader\**" />
-    <None Remove="frontend\**" />
     <None Remove="installer\**" />
-    <None Remove="old\**" />
     <None Remove="Release\**" />
-    <None Remove="test\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -56,14 +39,14 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="SIPSorcery.WebSocketSharp" Version="0.0.1" />
     <PackageReference Include="SteamKit2" Version="3.3.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="DepotDownloader">
-      <HintPath>DepotDownloader.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="DepotDownloader\DepotDownloader\DepotDownloader.csproj" />
   </ItemGroup>
+
 
   <ItemGroup>
     <None Update="amogusmanager-ui.exe">

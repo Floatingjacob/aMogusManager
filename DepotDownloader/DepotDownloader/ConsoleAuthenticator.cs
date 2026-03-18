@@ -32,7 +32,7 @@ namespace DepotDownloader
             }
             while (string.IsNullOrEmpty(code));
 
-            return Task.FromResult(code!);
+            return code!;
         }
 
         /// <inheritdoc />

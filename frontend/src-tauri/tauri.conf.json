@@ -10,7 +10,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "aMogusManager",
+        "title": "aMogusManager - Yet Another Among Us Mod Manager",
         "width": 800,
         "height": 600
       }
@@ -20,7 +20,7 @@
     }
   },
   "bundle": {
-    "active": true,
+    "active": false,
     "targets": "all",
     "icon": [
       "icons/icon.ico"

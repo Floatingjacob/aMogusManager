@@ -1,5 +1,6 @@
 // This file is subject to the terms and conditions defined
 // in file 'LICENSE', which is part of this source code package.
+
 // This file has been slightly modified by FloatingJacob to support being used as a library.
 
 using System;

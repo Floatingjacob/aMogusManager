@@ -31,7 +31,7 @@ namespace aMogusManager
             Console.WriteLine("[Warning] Closing this window will cause the frontend to stop working.");
             Console.ForegroundColor = ConsoleColor.White;
             await checkUpdates();
-            UIBackend.startBackend(); // 👁️👄👁️
+            FrontendBackend.startFrontendBackend(); // 👁️👄👁️
             Environment.CurrentDirectory = AppContext.BaseDirectory;
             Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "aMogusManager"));
             File.Copy("version.txt", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "aMogusManager/version.txt"), true);
