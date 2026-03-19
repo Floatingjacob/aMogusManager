@@ -59,7 +59,6 @@
             button.secondary {
                 background: #2a2f3a;
             }
-            ws://
             button:hover {
                 filter: brightness(1.1);
             }
@@ -170,8 +169,15 @@
             Frontend Created By ChatGPT
         </div>
     </div>
+    <script type="module">
 
-    <script>
+        import { open } from '@tauri-apps/plugin-dialog';
+        window.addModded = addModded;
+        window.addVanilla = addVanilla;
+        window.removeInstance = removeInstance;
+        window.runInstance = runInstance;
+        window.installPlugin = installPlugin;
+        window.changePath = changePath;
         let instances = [];
         let selectedIndex = null;
         let versions = [];
@@ -179,16 +185,16 @@
 
         // --- WebSocket Management ---
 
-        function connect() {
+       function connect() {
             socket = new WebSocket("ws://localhost:6741/backend");
 
-         /*   socket.onopen = () => {
-                document.getElementById("connectionStatus").innerHTML = '<span class="status-dot" style="background: #2ecc71;"></span>Backend Connected';
-                console.log("Connected to backend");
-                // Initial data fetch
-                refreshAll();
-            };
-         */
+            /*   socket.onopen = () => {
+                   document.getElementById("connectionStatus").innerHTML = '<span class="status-dot" style="background: #2ecc71;"></span>Backend Connected';
+                   console.log("Connected to backend");
+                   // Initial data fetch
+                   refreshAll();
+               };
+            */
             socket.onmessage = (event) => {
                 const data = event.data;
 
@@ -199,6 +205,7 @@
                     refreshAll();
                     return;
                 }
+
                 if (data === "gud") {
                     refreshAll();
                     return;
@@ -288,26 +295,27 @@
             alert("Launching " + instances[index].name);
         }
 
-        function removeInstance() {
+        async function removeInstance() {
             if (selectedIndex === null) return alert("No instance selected");
-            if (confirm(`Are you sure you want to remove ${instances[selectedIndex].name}?`)) {
+            if (await confirm(`Are you sure you want to remove ${instances[selectedIndex].name}?`)) {
                 sendAction({ action: "removeMod", modID: instances[selectedIndex].modID.toString() });
                 selectedIndex = null;
             }
         }
 
         function addVanilla() {
+            alert("The console window may require interaction while using this feature");
             const select = document.getElementById("versionSelect");
             const version = select.options[select.selectedIndex]?.text;
             if (!version) return alert("No version selected");
-
+            
             const name = prompt("Enter a name for the Vanilla instance:", "Vanilla " + version);
             if (!name) return;
-
             sendAction({ action: "installVanilla", name: name, version: version });
         }
 
-        function addModded() {
+        async function addModded() {
+            alert("The console window may require interaction while using this feature");
             const select = document.getElementById("versionSelect");
             const version = select.options[select.selectedIndex]?.text;
             if (!version) return alert("No version selected");
@@ -315,7 +323,7 @@
             const name = prompt("Enter a name for the Modded instance:", "Modded " + version);
             if (!name) return;
 
-            const zipPath = prompt("Enter the full path to your ZIP file:");
+            const zipPath = await open({multiple: false, directory: false, filters: [{name: "Among Us Mod", extensions: ["zip"]}]});
             if (!zipPath) return;
 
             sendAction({
@@ -326,10 +334,10 @@
             });
         }
 
-        function installPlugin() {
+        async function installPlugin() {
             if (selectedIndex === null) return alert("No instance selected");
 
-            const zipPath = prompt(`Enter the full path to the plugin ZIP for "${instances[selectedIndex].name}":`);
+            const zipPath = await open({ multiple: false, directory: false, filters: [{ name: "Among Us Plugin", extensions: ["zip"] }] });
             if (!zipPath) return;
 
             sendAction({
@@ -339,8 +347,8 @@
             });
         }
 
-        function changePath() {
-            const newPath = prompt("Enter the full path to the Among Us Steam folder:");
+        async function changePath() {
+            const zipPath = await open({ multiple: false, directory: true});
             if (!newPath) return;
 
             sendAction({ action: "changePath", newPath: newPath });
@@ -349,6 +357,5 @@
         // Start connection
         connect();
     </script>
-
 </body>
 </html>

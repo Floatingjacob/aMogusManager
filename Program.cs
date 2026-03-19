@@ -74,7 +74,7 @@ namespace aMogusManager
         {
             JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
             var toRemove = new List<JObject>();
-
+            
             foreach (JObject mogusmod in mods)
             {
                 string installDir = mogusmod["installDir"].ToString();
@@ -155,10 +155,12 @@ namespace aMogusManager
                 if (latestVersion > currentVersion)
                 {
                     Console.WriteLine("[Info] UpdateChecker: A newer version of aMogusManager is available. You can download it for your platform at https://github.com/floatingjacob/aMogusManager/releases/latest");
+                    Console.Title = $"aMogusManager v{currentVersion} (Update Available)";
                 }
                 else if (latestVersion == currentVersion)
                 {
                     Console.WriteLine("[Info] UpdateChecker: Up to date!");
+                    Console.Title = $"aMogusManager v{currentVersion}";
                     return;
                 }
             }

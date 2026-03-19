@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>aMogusManager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        :root {
+            --bg: #0f1116;
+            --panel: #171a21;
+            --accent: #ff4d4d;
+            --text: #e6e6e6;
+            --muted: #9aa0a6;
+            --border: #2a2f3a;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            background: radial-gradient(circle at top, #151922, var(--bg));
+            color: var(--text);
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            font-size: 1.6em;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+
+        button {
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            padding: 10px 14px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+            button.secondary {
+                background: #2a2f3a;
+            }
+            button:hover {
+                filter: brightness(1.1);
+            }
+
+            button:active {
+                transform: scale(0.97);
+            }
+
+        /* Main */
+        .main {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .instances {
+            flex: 1;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow-y: auto;
+        }
+
+        .instance {
+            padding: 14px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+            .instance:hover {
+                background: #1c2029;
+            }
+
+            .instance.selected {
+                background: #1f2430;
+                border-left: 4px solid var(--accent);
+            }
+
+        .instance-name {
+            font-weight: 700;
+        }
+
+        .instance-type {
+            font-size: 0.85em;
+            color: var(--muted);
+        }
+
+        .footer {
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 0.8em;
+            text-align: center;
+        }
+
+        .status-dot {
+            height: 8px;
+            width: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="sidebar">
+        <div class="logo">aMogusManager</div>
+        <div id="connectionStatus" style="font-size: 0.75em; margin-bottom: 15px; color: var(--muted);">
+            <span class="status-dot" style="background: #ff4d4d;"></span> Backend Disconnected
+        </div>
+
+        <label for="versionSelect" style="margin-bottom: 8px; display:block; color: var(--muted);">Select Version:</label>
+        <select id="versionSelect" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 12px; background: var(--panel); color: var(--text);">
+            <option>Loading...</option>
+        </select>
+
+        <button onclick="addModded()">➕ Add Mod Instance</button>
+        <button onclick="addVanilla()">➕ Add Vanilla Instance</button>
+        <button class="secondary" onclick="removeInstance()">🗑 Remove Instance</button>
+
+        <hr style="border-color: var(--border); margin: 14px 0;">
+
+        <button onclick="installPlugin()">🧩 Install Plugin</button>
+        <button onclick="changePath()">📁 Change Steam Path</button>
+    </div>
+
+    <div class="main">
+        <div class="header">
+            <h1>Instances</h1>
+            <button onclick="runInstance()">▶ Run Selected</button>
+        </div>
+
+        <div class="instances" id="instanceList"></div>
+
+        <div class="footer">
+            Frontend Created By ChatGPT
+        </div>
+    </div>
+    <script type="module">
+
+        import { open } from '@tauri-apps/plugin-dialog';
+        window.addModded = addModded;
+        window.addVanilla = addVanilla;
+        window.removeInstance = removeInstance;
+        window.runInstance = runInstance;
+        window.installPlugin = installPlugin;
+        window.changePath = changePath;
+        let instances = [];
+        let selectedIndex = null;
+        let versions = [];
+        let socket;
+
+        // --- WebSocket Management ---
+
+       function connect() {
+            socket = new WebSocket("ws://localhost:6741/backend");
+
+            /*   socket.onopen = () => {
+                   document.getElementById("connectionStatus").innerHTML = '<span class="status-dot" style="background: #2ecc71;"></span>Backend Connected';
+                   console.log("Connected to backend");
+                   // Initial data fetch
+                   refreshAll();
+               };
+            */
+            socket.onmessage = (event) => {
+                const data = event.data;
+
+                if (data === "HELLO") {
+                    document.getElementById("connectionStatus").innerHTML = '<span class="status-dot" style="background: #2ecc71;"></span>Backend Connected';
+                    console.log("Connected to backend");
+                    // Initial data fetch
+                    refreshAll();
+                    return;
+                }
+
+                if (data === "gud") {
+                    refreshAll();
+                    return;
+                }
+
+                try {
+                    const parsed = JSON.parse(data);
+
+                    // Determine if it's the mod list or version list based on object properties
+                    if (Array.isArray(parsed)) {
+                        if (parsed.length > 0 && parsed[0].hasOwnProperty('manifestID')) {
+                            updateVersions(parsed);
+                        } else {
+                            updateInstances(parsed);
+                        }
+                    }
+                } catch (e) {
+                    console.log("Server message:", data);
+                }
+            };
+
+            socket.onclose = () => {
+                document.getElementById("connectionStatus").innerHTML = '<span class="status-dot" style="background: #ff4d4d;"></span> Backend Disconnected (Reconnecting...)';
+                setTimeout(connect, 2000);
+            };
+        }
+
+        function sendAction(obj) {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify(obj));
+            } else {
+                alert("Not connected to backend!");
+            }
+        }
+
+        function refreshAll() {
+            sendAction({ action: "mods" });
+            sendAction({ action: "versions" });
+        }
+
+        // --- UI Rendering ---
+
+        function updateInstances(data) {
+            instances = data;
+            const list = document.getElementById("instanceList");
+            list.innerHTML = "";
+
+            instances.forEach((inst, i) => {
+                const div = document.createElement("div");
+                div.className = "instance" + (i === selectedIndex ? " selected" : "");
+                div.onclick = () => {
+                    selectedIndex = i;
+                    updateInstances(instances); // Re-render to show selection
+                };
+
+                div.innerHTML = `
+                <div>
+                    <div class="instance-name">${inst.name}</div>
+                    <div class="instance-type">
+                        ID ${inst.modID} • ${inst.installDir || 'No Directory'}
+                    </div>
+                </div>
+                <button onclick="event.stopPropagation(); runInstance(${i})">▶</button>
+            `;
+                list.appendChild(div);
+            });
+        }
+
+        function updateVersions(data) {
+            versions = data;
+            const select = document.getElementById("versionSelect");
+            select.innerHTML = "";
+
+            versions.forEach(v => {
+                const option = document.createElement("option");
+                option.value = v.manifestID;
+                option.textContent = v.version;
+                select.appendChild(option);
+            });
+        }
+
+        // --- Action Logic ---
+
+        function runInstance(index = selectedIndex) {
+            if (index === null) return alert("No instance selected");
+            sendAction({ action: "runMod", modID: instances[index].modID });
+            alert("Launching " + instances[index].name);
+        }
+
+        async function removeInstance() {
+            if (selectedIndex === null) return alert("No instance selected");
+            if (await confirm(`Are you sure you want to remove ${instances[selectedIndex].name}?`)) {
+                sendAction({ action: "removeMod", modID: instances[selectedIndex].modID.toString() });
+                selectedIndex = null;
+            }
+        }
+
+        function addVanilla() {
+            alert("The console window may require interaction while using this feature");
+            const select = document.getElementById("versionSelect");
+            const version = select.options[select.selectedIndex]?.text;
+            if (!version) return alert("No version selected");
+            
+            const name = prompt("Enter a name for the Vanilla instance:", "Vanilla " + version);
+            if (!name) return;
+            sendAction({ action: "installVanilla", name: name, version: version });
+        }
+
+        async function addModded() {
+            alert("The console window may require interaction while using this feature");
+            const select = document.getElementById("versionSelect");
+            const version = select.options[select.selectedIndex]?.text;
+            if (!version) return alert("No version selected");
+
+            const name = prompt("Enter a name for the Modded instance:", "Modded " + version);
+            if (!name) return;
+
+            const zipPath = await open({multiple: false, directory: false, filters: [{name: "Among Us Mod", extensions: ["zip"]}]});
+            if (!zipPath) return;
+
+            sendAction({
+                action: "installModded",
+                name: name,
+                version: version,
+                zipMod: zipPath
+            });
+        }
+
+        async function installPlugin() {
+            if (selectedIndex === null) return alert("No instance selected");
+
+            const zipPath = await open({ multiple: false, directory: false, filters: [{ name: "Among Us Plugin", extensions: ["zip"] }] });
+            if (!zipPath) return;
+
+            sendAction({
+                action: "installPlugin",
+                modID: instances[selectedIndex].modID,
+                zipPlugin: zipPath
+            });
+        }
+
+        async function changePath() {
+            const zipPath = await open({ multiple: false, directory: true});
+            if (!newPath) return;
+
+            sendAction({ action: "changePath", newPath: newPath });
+        }
+
+        // Start connection
+        connect();
+    </script>
+</body>
+</html>
