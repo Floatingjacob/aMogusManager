@@ -30,26 +30,25 @@ namespace aMogusManager
             int modID;
             string modIDStr;
             dynamic m = JObject.Parse(e.Data);
-            Console.WriteLine($"[Frontend] {m.action} requested");
+            Console.WriteLine($"[Frontend] \"{m.action}\" requested");
 
             switch ((string)m.action)
             {
                 case "runMod":
                     modIDStr = m.modID;
                     if (string.IsNullOrEmpty(modIDStr) || !int.TryParse(modIDStr, out modID)) Send("Invalid Paramaters");
-                    else Program.runMod(modID); Send("gud");
+                    else { Program.runMod(modID); Send("gud"); }
                     break;
                 case "removeMod":
                     modIDStr = m.modID;
                     if (string.IsNullOrEmpty(modIDStr) || !int.TryParse(modIDStr, out modID)) Send("Invalid Paramaters");
-                    else instanceStuffs.removeMod(modID).Wait(); Send("gud");
+                    else { instanceStuffs.removeMod(modID).Wait(); Send("gud"); }
                     break;
                 case "installModded":
                     name = m.name;
                     version = m.version;
                     string zipMod = m.zipMod;
-                    instanceStuffs.installMod(zipMod, name, version).Wait();
-                    Send("gud");
+                    Send(instanceStuffs.installMod(zipMod, name, version).Result);
                     break;
                 case "installPlugin":
                     modID = m.modID;
@@ -60,8 +59,7 @@ namespace aMogusManager
                 case "installVanilla":
                     name = m.name;
                     version = m.version;
-                    instanceStuffs.installVanilla(name, version).Wait();
-                    Send("gud");
+                    Send(instanceStuffs.installVanilla(name, version).Result);
                     break;
                 case "changePath":
                     string newPath = m.newPath;

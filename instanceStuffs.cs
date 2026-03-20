@@ -13,14 +13,14 @@ namespace aMogusManager
 		static string plugin;
 		static string zipMod;
 
-		public static async Task installVanilla(string instanceName, string gameVersion)
+		public static async Task<string> installVanilla(string instanceName, string gameVersion)
 		{
 			bool versionFound = false;
 			JArray versions = JArray.Parse(File.ReadAllText("versions.json"));
-
+			foreach (JObject instance in JArray.Parse(File.ReadAllText("mods.json"))) if (instance["name"].ToString().ToUpper() == instanceName.ToUpper()) return "alreadyExists"; // Prevents mulitple instances from having the same name
 			while (!versionFound)
 			{
-
+				
 				foreach (JObject version in versions)
 				{
 					if (gameVersion == version["version"].ToString())
@@ -43,10 +43,10 @@ namespace aMogusManager
 							new JProperty("installDir", $"./instances/{instanceName}")
 						));
 						File.WriteAllText("mods.json", mods.ToString());
-						return;
 					}
 				}
 			}
+			return "gud";
 		}
 
 		public static async Task installPlugin(int modID, string zipMod)
@@ -119,13 +119,13 @@ namespace aMogusManager
 			}
 		}
 
-		public static async Task installMod(string modFile, string instanceName, string gameVersion)
+		public static async Task<string> installMod(string modFile, string instanceName, string gameVersion)
 		{
 			bool versionFound = false;
 			zipMod = modFile.Trim().Trim('"').Trim('\'');
 
-
-			JArray versions = JArray.Parse(File.ReadAllText("versions.json"));
+            foreach (JObject instance in JArray.Parse(File.ReadAllText("mods.json"))) if (instance["name"].ToString().ToUpper() == instanceName.ToUpper()) return "alreadyExists"; // Prevents mulitple instances from having the same name
+            JArray versions = JArray.Parse(File.ReadAllText("versions.json"));
 			while (!versionFound)
 			{
 
@@ -164,7 +164,7 @@ namespace aMogusManager
 				Console.ForegroundColor = ConsoleColor.Red;
 				Console.WriteLine("[ERROR] Invalid path.");
 				Console.ForegroundColor = ConsoleColor.White;
-				return;
+				return "invalid mod path";
 			}
 			while (true)
 			{
@@ -197,6 +197,7 @@ namespace aMogusManager
 				new JProperty("installDir", instancePath)
 			));
 			File.WriteAllText("mods.json", modsArr.ToString());
+			return "gud";
 		}
 		public static async Task DownloadInstance(string manifestID, bool modded, string selectedVersion, string instanceName)
 		{

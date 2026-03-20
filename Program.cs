@@ -30,7 +30,9 @@ namespace aMogusManager
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("[Warning] Closing this window will cause the frontend to stop working.");
             Console.ForegroundColor = ConsoleColor.White;
+#if !DEBUG
             await checkUpdates();
+#endif
             FrontendBackend.startFrontendBackend(); // 👁️👄👁️
             Environment.CurrentDirectory = AppContext.BaseDirectory;
             Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "aMogusManager"));
@@ -51,7 +53,7 @@ namespace aMogusManager
                 await startUI(false);
             }
             else if (OperatingSystem.IsWindows())
-            {
+            { 
                 if (!File.Exists("gamefolder.txt")) File.WriteAllText("gamefolder.txt", "C:/Program Files (x86)/Steam/steamapps/common/Among Us");
                 mogusPath = File.ReadAllText("gamefolder.txt");
                 await startUI(true);
