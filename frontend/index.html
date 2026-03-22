@@ -362,7 +362,7 @@
         }
 
         async function changePath() {
-            const zipPath = await open({ multiple: false, directory: true});
+            const newPath = await open({ multiple: false, directory: true});
             if (!newPath) return;
 
             sendAction({ action: "changePath", newPath: newPath });
