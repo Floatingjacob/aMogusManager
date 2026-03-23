@@ -23,10 +23,13 @@ namespace aMogusManager
     {
 
         static string mogusPath;
+        static Version softVersion = new(File.ReadAllText("version.txt").Trim());
         static int FrontendPID;
         public static async Task Main(string[] args)
         {
             AppDomain.CurrentDomain.ProcessExit += new EventHandler(killFrontend);
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($"Welcome to aMogusManager!\nv{File.ReadAllText("version.txt")}");
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("[Warning] Closing this window will cause the frontend to stop working.");
             Console.ForegroundColor = ConsoleColor.White;
@@ -56,7 +59,11 @@ namespace aMogusManager
             { 
                 if (!File.Exists("gamefolder.txt")) File.WriteAllText("gamefolder.txt", "C:/Program Files (x86)/Steam/steamapps/common/Among Us");
                 mogusPath = File.ReadAllText("gamefolder.txt");
-                await startUI(true);
+#if DEBUG
+                while (true); // Keeps the program alive if in debug mode
+#else
+                await startUI(true); // Don't start UI in debug mode - assume it is being developed, and launching externally
+#endif
             }
         }
         public static async Task LinuxPrefix()
@@ -151,18 +158,25 @@ namespace aMogusManager
                 var response = await client.GetStringAsync("https://api.github.com/repos/floatingjacob/amogusmanager/releases/latest");
                 string tag = JObject.Parse(response)["tag_name"].ToString();
                 string version = await client.GetStringAsync($"https://github.com/floatingjacob/amogusmanager/releases/download/{tag}/version.txt");
-                Version currentVersion = new Version(File.ReadAllText("version.txt").Trim());
+                Version currentVersion = softVersion;
                 Version latestVersion = new Version(version.Trim());
 
                 if (latestVersion > currentVersion)
                 {
                     Console.WriteLine("[Info] UpdateChecker: A newer version of aMogusManager is available. You can download it for your platform at https://github.com/floatingjacob/aMogusManager/releases/latest");
                     Console.Title = $"aMogusManager v{currentVersion} (Update Available)";
+                    return;
                 }
                 else if (latestVersion == currentVersion)
                 {
                     Console.WriteLine("[Info] UpdateChecker: Up to date!");
                     Console.Title = $"aMogusManager v{currentVersion}";
+                    return;
+                }
+                else if (latestVersion < currentVersion)
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                    Console.WriteLine("Woah-- you seem to be using an unreleased version of aMogusManager!\nBe careful! There may be dangerous or untested features in this build.");
                     return;
                 }
             }
@@ -183,7 +197,6 @@ namespace aMogusManager
                 using var ui = Process.Start(new ProcessStartInfo { FileName = Path.Combine(AppContext.BaseDirectory, "amogusmanager-ui.exe") });
                 FrontendPID = ui.Id;
                 ui.WaitForExit();
-
             }
             else
             {

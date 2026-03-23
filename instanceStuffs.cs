@@ -17,7 +17,9 @@ namespace aMogusManager
 		{
 			bool versionFound = false;
 			JArray versions = JArray.Parse(File.ReadAllText("versions.json"));
-			foreach (JObject instance in JArray.Parse(File.ReadAllText("mods.json"))) if (instance["name"].ToString().ToUpper() == instanceName.ToUpper()) return "alreadyExists"; // Prevents mulitple instances from having the same name
+			JArray instances = JArray.Parse(File.ReadAllText("mods.json"));
+
+            foreach (JObject instance in instances) if (instance["name"].ToString().ToUpper() == instanceName.ToUpper()) return "alreadyExists"; // Prevents mulitple instances from having the same name
 			while (!versionFound)
 			{
 				
@@ -67,14 +69,12 @@ namespace aMogusManager
 					instanceFound = true;
 					selectedMod = (JObject)mods[pos];
 
-
-
 					string dest = selectedMod["installDir"].ToString();
 					instanceFound = true;
 					string root = plugin;
 					if (File.Exists(plugin))
 					{
-						string tmpf = "./tmp";
+						string tmpf = "tmp";
 						Directory.CreateDirectory(tmpf);
 						ZipFile.ExtractToDirectory(plugin, tmpf, true);
 						root = tmpf;
@@ -109,7 +109,7 @@ namespace aMogusManager
 						Directory.CreateDirectory(Path.GetDirectoryName(target));
 						File.Copy(file, target, true);
 					}
-					if (Directory.Exists("./tmp")) Directory.Delete("./tmp", true);
+					if (Directory.Exists("tmp")) Directory.Delete("tmp", true);
 
 					Console.ForegroundColor = ConsoleColor.Green;
 					Console.WriteLine("[Info] Plugin installed successfully.");
@@ -122,9 +122,11 @@ namespace aMogusManager
 		public static async Task<string> installMod(string modFile, string instanceName, string gameVersion)
 		{
 			bool versionFound = false;
-			zipMod = modFile.Trim().Trim('"').Trim('\'');
+			JArray mods = JArray.Parse(File.ReadAllText("mods.json"));
 
-            foreach (JObject instance in JArray.Parse(File.ReadAllText("mods.json"))) if (instance["name"].ToString().ToUpper() == instanceName.ToUpper()) return "alreadyExists"; // Prevents mulitple instances from having the same name
+            zipMod = modFile.Trim().Trim('"').Trim('\'');
+
+            foreach (JObject instance in mods) if (instance["name"].ToString().ToUpper() == instanceName.ToUpper()) return "alreadyExists"; // Prevents mulitple instances from having the same name
             JArray versions = JArray.Parse(File.ReadAllText("versions.json"));
 			while (!versionFound)
 			{
@@ -263,7 +265,21 @@ namespace aMogusManager
 				}
 			}
 		}
+        public static double cacheSize() // I could not for the LIFE OF ME figure out how to do this, so I had AI tutor me on it lol
+        {
+            long totalBytes = 0;
+			try
+			{
+				foreach (string file in Directory.EnumerateFiles("cache", "*", SearchOption.AllDirectories))
+				{
+					totalBytes += new FileInfo(file).Length;
+				}
+			}
+			catch (DirectoryNotFoundException) { return 0.0; } // If there's no cache, say its size is 0 (because it is, dummy)
+            return (totalBytes / 1024.0) / 1024.0 / 1024.0;
+        }
 
-	}
+
+    }
 
 }

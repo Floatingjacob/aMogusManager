@@ -23,7 +23,7 @@ namespace aMogusManager
             wssv.Start();
         }
 
-        protected override void OnMessage(MessageEventArgs e)
+        protected override async void OnMessage(MessageEventArgs e)
         {
             string name;
             string version;
@@ -42,7 +42,7 @@ namespace aMogusManager
                 case "removeMod":
                     modIDStr = m.modID;
                     if (string.IsNullOrEmpty(modIDStr) || !int.TryParse(modIDStr, out modID)) Send("Invalid Paramaters");
-                    else { instanceStuffs.removeMod(modID).Wait(); Send("gud"); }
+                    else { await instanceStuffs.removeMod(modID); Send("gud"); }
                     break;
                 case "installModded":
                     name = m.name;
@@ -53,7 +53,7 @@ namespace aMogusManager
                 case "installPlugin":
                     modID = m.modID;
                     string zipPlugin = m.zipPlugin;
-                    instanceStuffs.installPlugin(modID, zipPlugin).Wait();
+                    await instanceStuffs.installPlugin(modID, zipPlugin);
                     Send("gud");
                     break;
                 case "installVanilla":
@@ -63,7 +63,7 @@ namespace aMogusManager
                     break;
                 case "changePath":
                     string newPath = m.newPath;
-                    Program.changePath(newPath).Wait();
+                    await Program.changePath(newPath);
                     Send("gud");
                     break;
                 case "mods":
@@ -72,13 +72,21 @@ namespace aMogusManager
                 case "versions":
                     Send(File.ReadAllText("versions.json"));
                     break;
+                case "cacheSize":
+                    Send($"[{{\"cacheSize\":\"{instanceStuffs.cacheSize():F2} GB\"}}]"); // Why so literal?
+                    break;
+                case "clearCache":
+                    try { Directory.Delete("cache", true); }
+                    catch (DirectoryNotFoundException) { } // Don't complain if there's NO cache
+                    Send("cacheCleared");
+                    break;
             }
         }
 
         protected override void OnOpen()
         {
             Send("HELLO"); // Send a HELLO message to the frontend so it knows its connected.
-            Console.WriteLine("[INFO] Frontend connected!");
+            Console.WriteLine("[INFO] Frontend connected!"); // Dramatic console text so you know the backend didn't die
         }
     }
 }

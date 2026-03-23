@@ -155,6 +155,8 @@
 
         <button onclick="installPlugin()">🧩 Install Plugin</button>
         <button onclick="changePath()">📁 Change Steam Path</button>
+        <button id="clearCacheBtn" onclick="clearCache()">Clear Versions Cache (?GB)</button>
+
     </div>
 
     <div class="main">
@@ -178,11 +180,13 @@
         window.runInstance = runInstance;
         window.installPlugin = installPlugin;
         window.changePath = changePath;
+        window.clearCache = clearCache;
         let warned = false;
         let instances = [];
         let selectedIndex = null;
         let versions = [];
         let socket;
+        let clearingCache = false;
 
         // --- WebSocket Management ---
 
@@ -219,6 +223,13 @@
                     alert("There is already an instance with that name.");
                     return;
                 }
+
+                if (data === "cacheCleared") {
+                    alert("Version cache cleared!");
+                    clearingCache = false;
+                    refreshAll();
+                    return;
+                }
                 try {
                     const parsed = JSON.parse(data);
 
@@ -226,6 +237,8 @@
                     if (Array.isArray(parsed)) {
                         if (parsed.length > 0 && parsed[0].hasOwnProperty('manifestID')) {
                             updateVersions(parsed);
+                        } else if (parsed.length > 0 && parsed[0].hasOwnProperty('cacheSize')) {
+                            document.getElementById("clearCacheBtn").innerHTML = `Clear Versions Cache (${parsed[0].cacheSize})`;
                         } else {
                             updateInstances(parsed);
                         }
@@ -252,6 +265,7 @@
         function refreshAll() {
             sendAction({ action: "mods" });
             sendAction({ action: "versions" });
+            sendAction({ action: "cacheSize" });
         }
 
         // --- UI Rendering ---
@@ -296,6 +310,17 @@
         }
 
         // --- Action Logic ---
+
+        async function clearCache() {
+            if (clearingCache) {
+                alert("Please wait for the current operation to complete");
+                return;
+            }
+            if (await confirm("Are you sure you want to clear the version cache? Installing new instances may use more network bandwidth.")) {
+                sendAction({ action: "clearCache" });
+                clearingCache = true;
+            }
+        }
 
         function runInstance(index = selectedIndex) {
             if (index === null) return alert("No instance selected");
